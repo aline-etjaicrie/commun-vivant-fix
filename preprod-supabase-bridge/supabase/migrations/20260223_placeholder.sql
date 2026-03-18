@@ -1,0 +1,2 @@
+-- Placeholder for remote migration history alignment.
+-- The real legacy 20260223 files live in the main repository and are intentionally not replayed from this bridge workspace.

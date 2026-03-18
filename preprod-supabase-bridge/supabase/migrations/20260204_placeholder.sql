@@ -1,0 +1,2 @@
+-- Placeholder for remote migration history alignment.
+-- The real legacy 20260204 files live in the main repository but cannot be replayed on this preprod database.

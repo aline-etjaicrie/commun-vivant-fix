@@ -1,0 +1,2 @@
+-- Placeholder for remote migration history alignment.
+-- The real legacy 20260207 files live in the main repository and are already represented on the remote history.
