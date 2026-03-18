@@ -1,11 +1,12 @@
 import Stripe from 'stripe';
+import { normalizeConfiguredBaseUrl } from '@/lib/publicUrls';
 
 let stripeClient: Stripe | null | undefined;
 
 const DEFAULT_LOCAL_DOMAIN = 'http://localhost:3000';
 
 function getAppBaseUrl(): string {
-  return (
+  return normalizeConfiguredBaseUrl(
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.NEXT_PUBLIC_APP_URL ||
     DEFAULT_LOCAL_DOMAIN

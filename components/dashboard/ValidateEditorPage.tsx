@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Eye, RefreshCcw, Save } from 'lucide-react';
+import { ChevronLeft, Eye, Loader2, RefreshCcw, Save } from 'lucide-react';
 import { resolveCommunTypeFromPayload } from '@/lib/almaProfiles';
 import { type CommunType, resolveCommunTypeFromContext } from '@/lib/communTypes';
 import {
@@ -43,6 +43,9 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [customColors, setCustomColors] = useState(DEFAULT_CUSTOM_COLORS);
   const [notice, setNotice] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isOpeningPreview, setIsOpeningPreview] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const availableTemplates = useMemo(
     () => getTemplatesForCommunType(communType),
@@ -161,18 +164,27 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
   };
 
   const handleSave = () => {
-    saveState();
-    setNotice('Votre texte est bien enregistré. Vous pouvez poursuivre quand vous voulez.');
+    setIsSaving(true);
+    try {
+      saveState();
+      setNotice('Votre texte est bien enregistré. Vous pouvez poursuivre quand vous voulez.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePreview = () => {
+    setIsOpeningPreview(true);
     saveState();
     router.push(`/memorial/${encodeURIComponent(memoryId)}/preview`);
   };
 
   const handleRegenerate = () => {
+    setIsRegenerating(true);
     router.push(`/dashboard/generate?memoryId=${encodeURIComponent(memoryId)}`);
   };
+
+  const isBusy = isSaving || isOpeningPreview || isRegenerating;
 
   if (loading) {
     return (
@@ -217,17 +229,19 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
           <div className="flex items-center gap-3">
             <button
               onClick={handleRegenerate}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#D8D3CA] px-4 py-2 text-sm text-[#0F2A44] hover:border-[#C9A24D]/50"
+              disabled={isBusy}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#D8D3CA] px-4 py-2 text-sm text-[#0F2A44] hover:border-[#C9A24D]/50 disabled:opacity-60"
             >
-              <RefreshCcw className="h-4 w-4" />
-              Régénérer
+              {isRegenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+              Relancer la generation
             </button>
             <button
               onClick={handlePreview}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#173754]"
+              disabled={isBusy}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#173754] disabled:opacity-60"
             >
-              <Eye className="h-4 w-4" />
-              Aperçu complet
+              {isOpeningPreview ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+              Ouvrir l apercu complet
             </button>
           </div>
         </div>
@@ -277,17 +291,19 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
             <div className="mt-5 flex flex-wrap gap-3">
               <button
                 onClick={handleSave}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#C9A24D]/30 bg-[#FFF9EC] px-4 py-2 text-sm font-medium text-[#7A5A2E] hover:border-[#C9A24D]/60"
+                disabled={isBusy}
+                className="inline-flex items-center gap-2 rounded-xl border border-[#C9A24D]/30 bg-[#FFF9EC] px-4 py-2 text-sm font-medium text-[#7A5A2E] hover:border-[#C9A24D]/60 disabled:opacity-60"
               >
-                <Save className="h-4 w-4" />
-                Enregistrer
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Enregistrer le texte
               </button>
               <button
                 onClick={handlePreview}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#C9A24D] to-[#E1C97A] px-5 py-2 text-sm font-semibold text-white"
+                disabled={isBusy}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#C9A24D] to-[#E1C97A] px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
-                <Eye className="h-4 w-4" />
-                Ouvrir l’aperçu
+                {isOpeningPreview ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                Ouvrir l apercu complet
               </button>
             </div>
           </section>

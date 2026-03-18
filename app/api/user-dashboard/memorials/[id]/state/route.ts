@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/user-dashboard/_shared';
 import { resolveMemoryPublicUrl } from '@/lib/memoryPublication';
+import { normalizePublicUrlOrPath } from '@/lib/publicUrls';
 import {
   appendMemoryActivityLog,
   getMemoryAccessProfile,
@@ -53,6 +54,11 @@ export async function PATCH(
       updatePayload.public_url = resolved.publicUrl;
     }
 
+    const responsePublicUrl = normalizePublicUrlOrPath(
+      updatePayload.public_url || memory.public_url || null,
+      `/${updatePayload.slug || memory.slug || memoryId}`
+    );
+
     const { error: updateError } = await admin
       .from('memories')
       .update(updatePayload)
@@ -74,13 +80,13 @@ export async function PATCH(
       targetId: memoryId,
       metadata: {
         publicationStatus,
-        publicUrl: updatePayload.public_url || memory.public_url || null,
+        publicUrl: responsePublicUrl,
       },
     });
 
     return NextResponse.json({
       success: true,
-      publicUrl: updatePayload.public_url || memory.public_url || null,
+      publicUrl: responsePublicUrl,
     });
   } catch (error) {
     console.error('USER DASH memorial state server error:', error);

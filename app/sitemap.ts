@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next';
+import { normalizeConfiguredBaseUrl } from '@/lib/publicUrls';
 
 function getBaseUrl(): string {
-  return String(process.env.NEXT_PUBLIC_SITE_URL || 'https://communvivant.fr').replace(/\/+$/, '');
+  return normalizeConfiguredBaseUrl(process.env.NEXT_PUBLIC_SITE_URL || 'https://communvivant.fr');
 }
 
 function isPublicProduction(): boolean {

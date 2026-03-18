@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { generateMistralPrompt } from '@/lib/generateMistralPrompt';
 import { buildMemoryFallbackText } from '@/lib/memoryFallbackText';
+import { resolveIdentity } from '@/lib/memorialRuntime';
 import {
   appendMemoryActivityLog,
   buildMemoryContributionPrompt
@@ -13,6 +14,58 @@ import {
 import { authorizeMemoryGeneration } from '@/lib/server/memoryGenerationAccess';
 
 export const runtime = 'nodejs';
+
+function normalizeToken(value: string): string {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function getLeadingToken(value: string): string {
+  return (
+    String(value || '')
+      .trim()
+      .replace(/^[\s"'“”‘’«»([{-]+/, '')
+      .split(/[\s,.;:!?)}\]-]+/)
+      .find(Boolean) || ''
+  );
+}
+
+function hasTruncatedClosing(value: string): boolean {
+  const trimmed = String(value || '').trim();
+  return (
+    /(?:^|\n)\s*En mémoire de\s*$/i.test(trimmed) ||
+    /(?:^|\n)\s*À\s*$/i.test(trimmed) ||
+    /(?:^|\n)\s*De la part de\s*$/i.test(trimmed)
+  );
+}
+
+function validateGeneratedMemorialText(value: string, data: any): { ok: true } | { ok: false; reason: string } {
+  const identity = resolveIdentity(data || {});
+  const expectedFirstName = String(identity?.prenom || '').trim();
+  const normalizedExpectedFirstName = normalizeToken(expectedFirstName);
+
+  if (hasTruncatedClosing(value)) {
+    return { ok: false, reason: 'truncated_closing' };
+  }
+
+  if (!normalizedExpectedFirstName) {
+    return { ok: true };
+  }
+
+  const leadingToken = normalizeToken(getLeadingToken(value));
+  if (!leadingToken || leadingToken !== normalizedExpectedFirstName) {
+    return { ok: false, reason: 'unexpected_opening_identity' };
+  }
+
+  if (!normalizeToken(value).includes(normalizedExpectedFirstName)) {
+    return { ok: false, reason: 'missing_subject_identity' };
+  }
+
+  return { ok: true };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,7 +119,7 @@ export async function POST(req: NextRequest) {
                   { role: 'system', content: 'Tu es un écrivain spécialisé dans les récits mémoriels.' },
                   { role: 'user', content: prompt }
                 ],
-                temperature: 0.7,
+                temperature: 0.35,
                 max_tokens: 1500,
               }),
             });
@@ -165,9 +218,22 @@ export async function POST(req: NextRequest) {
 
     // 3. Call Mistral AI
     const generated = await runGeneration(prompt);
-    const generatedText = generated.usedFallback
+    const validation = generated.usedFallback
+      ? { ok: true as const }
+      : validateGeneratedMemorialText(generated.text, memory.data || {});
+    const fallbackReason = generated.usedFallback
+      ? generated.fallbackReason || null
+      : validation.ok
+      ? null
+      : validation.reason;
+    const shouldUseFallback = generated.usedFallback || !validation.ok;
+    const generatedText = shouldUseFallback
       ? buildMemoryFallbackText(memory.data || {})
       : generated.text;
+
+    if (!generated.usedFallback && !validation.ok) {
+      console.error(`[generate-memorial] Rejected model output for memory ${memoryId}: ${validation.reason}`);
+    }
 
     // 4. Update Memory in DB
     const { error: updateError } = await supabase
@@ -197,8 +263,8 @@ export async function POST(req: NextRequest) {
       metadata: {
         usedCustomPrompt: Boolean(customPrompt),
         contributionCount: contributionContext.contributionCount,
-        usedFallback: generated.usedFallback,
-        fallbackReason: generated.usedFallback ? generated.fallbackReason : null,
+        usedFallback: shouldUseFallback,
+        fallbackReason,
       },
     });
 
@@ -213,8 +279,8 @@ export async function POST(req: NextRequest) {
       contentText: generatedText,
       metadata: {
         contributionCount: contributionContext.contributionCount,
-        usedFallback: generated.usedFallback,
-        fallbackReason: generated.usedFallback ? generated.fallbackReason : null,
+        usedFallback: shouldUseFallback,
+        fallbackReason,
       },
     });
 
@@ -222,8 +288,8 @@ export async function POST(req: NextRequest) {
       success: true,
       text: generatedText,
       contributionCount: contributionContext.contributionCount,
-      usedFallback: generated.usedFallback,
-      fallbackReason: generated.usedFallback ? (generated.fallbackReason || null) : null,
+      usedFallback: shouldUseFallback,
+      fallbackReason,
       mistralStatus: (generated as any).mistralStatus ?? null,
     });
 

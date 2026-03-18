@@ -7,7 +7,6 @@ import { QuestionnaireData } from '@/lib/schema';
 import Progress from '@/components/Progress';
 import StepComponent from '@/components/Step';
 import { ChevronLeft, ChevronRight, Save, Home, Sparkles, Loader2 } from 'lucide-react';
-import AlmaChatBubble from '@/components/AlmaChatBubble';
 import {
   getAlmaPrefillStorageKey,
   getQuestionnaireDraftStorageKey,
@@ -311,7 +310,7 @@ function QuestionnaireContent() {
                   </>
                 ) : (
                   <>
-                    <span>{isPremium ? 'Continuer vers les médias' : 'Voir un aperçu'}</span>
+                    <span>Continuer vers les médias</span>
                     <ChevronRight className="w-5 h-5" />
                   </>
                 )}
@@ -329,13 +328,11 @@ function QuestionnaireContent() {
 
           {/* Indication de sauvegarde */}
           <p className="text-center text-memoir-blue/50 text-xs md:text-sm mt-6">
-            Vos réponses sont automatiquement sauvegardées dans votre navigateur
+            Vos réponses s enregistrent automatiquement dans votre navigateur
           </p>
         </div>
       </div>
 
-      {/* Bulle ALMA flottante */}
-      <AlmaChatBubble />
     </>
   );
 }

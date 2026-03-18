@@ -96,12 +96,15 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const shouldReplaceNarrativeData = Boolean(questionnaire || finalization);
       const updatePayload: Record<string, unknown> = {
         context,
-        data: {
-          ...(existingMemory.data && typeof existingMemory.data === 'object' ? existingMemory.data : {}),
-          ...nextData,
-        },
+        data: shouldReplaceNarrativeData
+          ? nextData
+          : {
+              ...(existingMemory.data && typeof existingMemory.data === 'object' ? existingMemory.data : {}),
+              ...nextData,
+            },
       };
 
       if (user && !existingOwnerId) {

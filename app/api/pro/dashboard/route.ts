@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProContext } from '@/app/api/pro/_shared';
 import { deriveCommissionStatus, normalizePaymentStatus } from '@/lib/paymentStatus';
-import { buildB2BPath, buildB2CPath } from '@/lib/publicUrls';
+import { buildB2BPath, buildB2CPath, normalizePublicUrlOrPath } from '@/lib/publicUrls';
 
 export const runtime = 'nodejs';
 
@@ -40,9 +40,10 @@ export async function GET(request: NextRequest) {
           const label = row.dossier_label || 'Dossier';
           const memorySlug = row.slug || row.id;
           const paymentStatus = normalizePaymentStatus(row.payment_status);
-          const publicPath = row.public_url || (ctx.agency.slug
+          const fallbackPath = ctx.agency.slug
             ? buildB2BPath(ctx.agency.slug, memorySlug)
-            : buildB2CPath(memorySlug));
+            : buildB2CPath(memorySlug);
+          const publicPath = normalizePublicUrlOrPath(row.public_url, fallbackPath);
 
           return {
             id: row.id,

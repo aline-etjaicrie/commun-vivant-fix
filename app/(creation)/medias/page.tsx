@@ -573,7 +573,7 @@ export default function MediasPage() {
             className="flex items-center gap-2 px-8 py-4 bg-memoir-gold text-white rounded-lg font-medium text-lg hover:bg-memoir-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
             <Check className="w-5 h-5" />
-            Continuer vers le texte
+            Continuer vers la generation du texte
           </button>
         </div>
 

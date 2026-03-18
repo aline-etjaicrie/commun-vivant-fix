@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/user-dashboard/_shared';
 import { resolveCommunTypeFromContext, type CommunType } from '@/lib/communTypes';
 import { normalizePaymentStatus } from '@/lib/paymentStatus';
-import { buildB2CPath } from '@/lib/publicUrls';
+import { buildB2CPath, normalizePublicUrlOrPath } from '@/lib/publicUrls';
 import {
   hasAdministrativeMemoryRole,
   normalizeCollaboratorRole,
@@ -122,7 +122,10 @@ export async function GET(request: NextRequest) {
               joinedAt: membership.joined_at,
               lastSeenAt: membership.last_seen_at,
               publicationStatus: normalizePublicationStatus(memory.publication_status),
-              publicUrl: memory.public_url || buildB2CPath(memory.slug || memory.id),
+              publicUrl: normalizePublicUrlOrPath(
+                memory.public_url,
+                buildB2CPath(memory.slug || memory.id)
+              ),
             };
           })
           .filter(Boolean);
@@ -291,7 +294,10 @@ export async function GET(request: NextRequest) {
         messagesCount: relatedMessages.length,
         candlesCount: relatedCandles.length,
         pendingMessagesCount,
-        publicUrl: row.public_url || buildB2CPath(row.slug || row.id),
+        publicUrl: normalizePublicUrlOrPath(
+          row.public_url,
+          buildB2CPath(row.slug || row.id)
+        ),
         imageThemes: Array.isArray(row.image_themes)
           ? row.image_themes
           : Array.isArray(row.memory_image_energies)

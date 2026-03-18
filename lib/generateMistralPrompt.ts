@@ -210,6 +210,8 @@ Quelques exigences absolues :
 — Le texte commence par le prénom : "${prenom || 'Cette personne'}."
 — Il fait entre 300 et 500 mots.
 — Il est organisé en paragraphes (4 à 6), chaque paragraphe développant une facette de la personne, pas une rubrique.
+- Utilise uniquement les informations fournies ci-dessus. N'invente jamais un autre prénom, une autre identité, une autre passion, une autre habitude ou une autre scène.
+- Si une information manque, reste sobre et général sur ce point au lieu d'inventer.
 — Si une anecdote est mentionnée ci-dessus, elle doit apparaître dans le texte, racontée en quelques phrases vivantes.
 — Si un message personnel est mentionné, intègre-le en le reformulant naturellement, jamais mot pour mot entre guillemets dans le texte.
 — Aucune liste à puces, aucun titre, aucun sous-titre dans le texte final.
