@@ -1,0 +1,25 @@
+'use client';
+
+import { Suspense, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+function AlmaDevApercuContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    params.set('isolated', '1');
+    router.replace(`/alma/apercu?${params.toString()}`);
+  }, [router, searchParams]);
+
+  return null;
+}
+
+export default function AlmaDevApercuPage() {
+  return (
+    <Suspense fallback={null}>
+      <AlmaDevApercuContent />
+    </Suspense>
+  );
+}

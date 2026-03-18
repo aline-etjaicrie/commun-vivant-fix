@@ -1,0 +1,16 @@
+.next
+.next*
+node_modules
+.git
+.DS_Store
+.env.local
+.env*.local
+*.zip
+Archive.zip
+app.zip
+components.zip
+home.zip
+lib.zip
+coverage
+*.log
+*.tsbuildinfo
