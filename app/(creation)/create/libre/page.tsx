@@ -92,19 +92,19 @@ function FreeWriteContent() {
                                     value={formData.name}
                                     onChange={(e) => handleChange('name', e.target.value)}
                                     className="w-full p-4 bg-memoir-bg/30 rounded-xl border border-memoir-blue/5 focus:ring-2 focus:ring-memoir-blue/20 outline-none font-serif text-lg text-memoir-blue placeholder:text-memoir-blue/20"
-                                    placeholder="Ex: Jean Dupont"
+                                    placeholder="Ex. : Jean Dupont"
                                 />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-widest text-memoir-blue/60 mb-2">
-                                    Dates (Optionnel)
+                                    Dates (optionnel)
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.dates}
                                     onChange={(e) => handleChange('dates', e.target.value)}
                                     className="w-full p-4 bg-memoir-bg/30 rounded-xl border border-memoir-blue/5 focus:ring-2 focus:ring-memoir-blue/20 outline-none font-serif text-lg text-memoir-blue placeholder:text-memoir-blue/20"
-                                    placeholder="Ex: 1950 - 2023"
+                                    placeholder="Ex. : 1950 - 2023"
                                 />
                             </div>
                         </div>

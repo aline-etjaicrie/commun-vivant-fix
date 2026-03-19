@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSteps } from './steps';
 import { QuestionnaireData } from '@/lib/schema';
 import Progress from '@/components/Progress';
 import StepComponent from '@/components/Step';
-import { ChevronLeft, ChevronRight, Save, Home, Sparkles, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Sparkles, Loader2 } from 'lucide-react';
 import {
   getAlmaPrefillStorageKey,
   getQuestionnaireDraftStorageKey,
@@ -42,6 +42,8 @@ function QuestionnaireContent() {
 
   const [stepIndex, setStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('Réponses enregistrées automatiquement.');
+  const saveStatusTimeoutRef = useRef<number | null>(null);
   const [data, setData] = useState<Partial<QuestionnaireData>>({
     identite: { prenom: '' },
     photoProfil: {},
@@ -91,6 +93,17 @@ function QuestionnaireContent() {
   const currentStep = steps[stepIndex];
   const isFirstStep = stepIndex === 0;
   const isLastStep = stepIndex === steps.length - 1;
+  const currentStepNumber = stepIndex + 1;
+  const nextStep = !isLastStep ? steps[stepIndex + 1] : null;
+  const estimatedDuration = steps.length <= 5 ? '5 min' : '5 à 10 min';
+
+  useEffect(() => {
+    return () => {
+      if (saveStatusTimeoutRef.current && typeof window !== 'undefined') {
+        window.clearTimeout(saveStatusTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Charger les données depuis localStorage au montage
   useEffect(() => {
@@ -147,6 +160,15 @@ function QuestionnaireContent() {
 
       // Sauvegarde automatique à chaque changement
       localStorage.setItem(questionnaireDraftStorageKey, JSON.stringify(newData));
+      setSaveStatus('Enregistré');
+      if (typeof window !== 'undefined') {
+        if (saveStatusTimeoutRef.current) {
+          window.clearTimeout(saveStatusTimeoutRef.current);
+        }
+        saveStatusTimeoutRef.current = window.setTimeout(() => {
+          setSaveStatus('Réponses enregistrées automatiquement.');
+        }, 1600);
+      }
       return newData;
     });
   };
@@ -163,11 +185,6 @@ function QuestionnaireContent() {
       setStepIndex((i) => i - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
-
-  const handleSave = () => {
-    localStorage.setItem(questionnaireDraftStorageKey, JSON.stringify(data));
-    alert('Vos réponses ont été sauvegardées.');
   };
 
   const handleSubmit = async () => {
@@ -235,7 +252,7 @@ function QuestionnaireContent() {
               className="inline-flex items-center gap-2 text-memoir-gold hover:text-memoir-gold/80 transition-colors mb-4"
             >
               <Home className="w-5 h-5" />
-              <span className="text-sm font-medium">Retour à l'accueil</span>
+              <span className="text-sm font-medium">Retour à l’accueil</span>
             </button>
             <h1 className="text-3xl md:text-5xl font-bold text-memoir-blue mb-2 md:mb-4">
               {communConfig.title}
@@ -246,7 +263,7 @@ function QuestionnaireContent() {
           </div>
 
           <div className="bg-memoir-blue/5 border border-memoir-blue/10 rounded-xl p-3 mb-6 text-sm text-memoir-blue">
-            Parcours choisi : <strong>{communLabel}</strong>. Ce choix est conservé pour la suite, vous n'avez pas à le resélectionner.
+            Parcours choisi : <strong>{communLabel}</strong>. Ce choix sera conservé pour la suite.
           </div>
 
           {almaPrefill && (
@@ -254,10 +271,10 @@ function QuestionnaireContent() {
               <Sparkles className="w-5 h-5 text-memoir-gold mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm font-medium text-memoir-blue">
-                  Alma a déjà recueilli des informations ✓
+                  ALMA a préparé quelques éléments à relire avant de continuer.
                 </p>
                 <p className="text-xs text-memoir-blue/60 mt-1">
-                  Certains champs ont été pré-remplis. Vérifiez et complétez à votre rythme.
+                  Vous gardez la main sur chaque réponse. Vérifiez simplement ce qui a été ajouté.
                 </p>
               </div>
             </div>
@@ -265,12 +282,22 @@ function QuestionnaireContent() {
 
           {isIsolated && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-sm text-amber-900">
-              Mode isole actif: ce questionnaire n'impacte pas le flux de finalisation en production.
+              Mode isolé actif : ce questionnaire n’impacte pas le flux de finalisation en production.
             </div>
           )}
 
+          <div className="mb-4 rounded-xl bg-white/80 px-4 py-3 text-sm text-memoir-blue shadow-sm border border-memoir-blue/10">
+            <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+              <span><strong>Étape {currentStepNumber}</strong> sur {steps.length}</span>
+              <span>Durée estimée : {estimatedDuration}</span>
+              <span>
+                Ensuite : {nextStep ? nextStep.title : 'Médias puis première version du texte'}
+              </span>
+            </div>
+          </div>
+
           {/* Barre de progression */}
-          <Progress current={stepIndex} total={steps.length} />
+          <Progress current={currentStepNumber} total={steps.length} />
 
           {/* Étape courante */}
           <div className="bg-white rounded-2xl shadow-lg p-6 md:p-12 mb-6 md:mb-8">
@@ -288,14 +315,9 @@ function QuestionnaireContent() {
               <span className="inline">Précédent</span>
             </button>
 
-            <button
-              onClick={handleSave}
-              className="btn-secondary flex items-center justify-center gap-2 order-3 md:order-2"
-              title="Sauvegarder la progression"
-            >
-              <Save className="w-5 h-5" />
-              <span>Sauvegarder</span>
-            </button>
+            <p className="order-3 text-center text-xs md:order-2 md:text-sm text-memoir-blue/55">
+              {saveStatus}
+            </p>
 
             {isLastStep ? (
               <button
@@ -325,11 +347,6 @@ function QuestionnaireContent() {
               </button>
             )}
           </div>
-
-          {/* Indication de sauvegarde */}
-          <p className="text-center text-memoir-blue/50 text-xs md:text-sm mt-6">
-            Vos réponses s enregistrent automatiquement dans votre navigateur
-          </p>
         </div>
       </div>
 

@@ -8,8 +8,10 @@ import {
   getFinalizationRaw,
   getQuestionnaireDataRaw,
 } from '@/lib/creationFlowStorage';
+import { buildGenerationRequestData } from '@/lib/buildGenerationRequestData';
 import { getLegacyContextForCommunType, resolveCommunTypeFromContext } from '@/lib/communTypes';
 import { resolveCommunTypeFromPayload } from '@/lib/almaProfiles';
+import { getWritingStyle, resolveWritingStyle } from '@/lib/compositionStudio';
 import { ensureDraftMemory } from '@/lib/client/draftMemory';
 import { buildMemoryFallbackText } from '@/lib/memoryFallbackText';
 import { resolveSensitiveJourneyCopy } from '@/lib/sensitiveJourneyCopy';
@@ -63,6 +65,7 @@ function StableGeneratePageContent() {
     const finalization = safeParse(getFinalizationRaw());
     const flow = safeParse(localStorage.getItem(STORAGE_KEYS.creationFlow));
     const media = safeParse(localStorage.getItem(STORAGE_KEYS.mediaData));
+    const previewData = safeParse(localStorage.getItem('memorialPreviewData'));
     const qDataRaw = getQuestionnaireDataRaw();
     const questionnaireRaw = safeParse(qDataRaw);
     const questionnaire = finalization?.source === 'alma' ? finalization : questionnaireRaw;
@@ -72,7 +75,7 @@ function StableGeneratePageContent() {
       ? resolveCommunTypeFromPayload(finalization.communType)
       : resolveCommunTypeFromContext(context);
 
-    return { context, communType, questionnaire, media };
+    return { context, communType, questionnaire, media, previewData };
   }, []);
 
   useEffect(() => {
@@ -91,6 +94,12 @@ function StableGeneratePageContent() {
     context: prepared.context,
     communType: prepared.communType,
   });
+  const selectedWritingStyle = getWritingStyle(
+    resolveWritingStyle(
+      prepared.previewData?.writingStyle || prepared.previewData?.style || prepared.questionnaire?.writingStyle || prepared.questionnaire?.style,
+      prepared.communType
+    )
+  );
 
   const redirectToValidate = (nextMemoryId: string) => {
     const target = getValidateUrl(nextMemoryId);
@@ -120,6 +129,13 @@ function StableGeneratePageContent() {
     const questionnaire = prepared.questionnaire || {};
     const context = prepared.context || 'funeral';
     const communType = prepared.communType || 'deces';
+    const requestData = buildGenerationRequestData({
+      questionnaire,
+      media: prepared.media,
+      previewData: prepared.previewData,
+      context,
+      communType,
+    });
 
     try {
       const parseJsonResponse = async (response: Response) => {
@@ -138,11 +154,17 @@ function StableGeneratePageContent() {
         memoryId,
         context,
         communType,
-        questionnaire,
+        questionnaire: requestData,
         media: prepared.media,
         finalization: {
           context,
           communType,
+          writingStyle: requestData.writingStyle,
+          style: requestData.style,
+          visualTheme: requestData.visualTheme,
+          compositionModel: requestData.compositionModel,
+          textTypography: requestData.textTypography,
+          tributeMode: requestData.tributeMode,
         },
       });
       const { data } = await supabase.auth.getSession();
@@ -159,6 +181,7 @@ function StableGeneratePageContent() {
         body: JSON.stringify({
           memoryId: draft.memoryId,
           draftToken: draft.draftToken,
+          data: requestData,
         }),
       });
       clearTimeout(timeout);
@@ -229,10 +252,10 @@ function StableGeneratePageContent() {
               onClick={handleGenerate}
               className="rounded-xl bg-gradient-to-r from-[#C9A24D] to-[#E1C97A] px-8 py-3 font-semibold text-white hover:shadow-lg"
             >
-              Lancer une première version
+              Lancer la première version
             </button>
             <p className="mt-3 text-sm text-gray-500">
-              Les souvenirs deja partages par vos proches seront aussi pris en compte quand ils enrichissent le recit.
+              Ton choisi : {selectedWritingStyle.label}. Les souvenirs déjà partagés par vos proches seront aussi pris en compte quand ils enrichissent le récit.
             </p>
           </div>
         )}
@@ -251,7 +274,7 @@ function StableGeneratePageContent() {
                 onClick={handleGenerate}
                 className="rounded-xl bg-[#0F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0A2035]"
               >
-                Réessayer
+                Relancer la première version
               </button>
               <button
                 onClick={() => router.push('/medias')}

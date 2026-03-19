@@ -1,3 +1,8 @@
+import {
+  buildWritingStylePromptBlock,
+  resolveWritingStyle,
+  type WritingStyleId,
+} from './compositionStudio';
 import { generateSignature } from './generateSignature';
 
 export function generateMistralPrompt(data: any): string {
@@ -22,7 +27,28 @@ export function generateMistralPrompt(data: any): string {
   const isObjectJourney = context === 'object_memory' || communType === 'memoire-objet';
   const isTransmissionJourney = communType === 'transmission-familiale';
 
-  const tonalite = data.style || 'sobre';
+  const normalizedCommunType =
+    communType === 'hommage-vivant' ||
+    communType === 'transmission-familiale' ||
+    communType === 'memoire-objet' ||
+    communType === 'pro-ceremonie'
+      ? communType
+      : 'deces';
+  const writingStyle = resolveWritingStyle(
+    data.writingStyle || data.style,
+    normalizedCommunType
+  ) as WritingStyleId;
+  const writingStylePromptBlock = buildWritingStylePromptBlock(writingStyle);
+  const writingStyleLabel =
+    writingStyle === 'sensible-poetique'
+      ? 'Sensible et poétique'
+      : writingStyle === 'chaleureux-familial'
+        ? 'Chaleureux et familial'
+        : writingStyle === 'lumineux-celebrant'
+          ? 'Lumineux et célébrant'
+          : writingStyle === 'narratif-patrimonial'
+            ? 'Narratif et patrimonial'
+            : 'Sobre et digne';
   const signature = generateSignature(data);
 
   // Pronoms
@@ -195,16 +221,22 @@ export function generateMistralPrompt(data: any): string {
     contexteParcours = `Le texte est un hommage memoriel. Il doit rester sobre, humain, incarné et lisible dans la duree.`;
   }
 
+  const almaConversationText = String(data.almaConversationText || data.sourceConversation || '').trim();
+
   const prompt = `Tu es un écrivain. On te demande d'écrire un texte d'hommage sur ${prenom_nom || 'une personne'}.
 
 ${voix}
 ${contexteParcours}
 ${contextePro ? contextePro + '\n' : ''}
-Ton : ${tonalite}. Le texte doit être humain, intime, émouvant — comme une lettre écrite par quelqu'un qui aimait vraiment cette personne, pas comme un curriculum vitae ou une notice biographique.
+${writingStylePromptBlock}
+Le texte doit respecter ce style du debut a la fin. Ne reviens pas vers un ton generique ou neutre.
+Le texte doit être humain, intime, émouvant — comme une lettre écrite par quelqu'un qui aimait vraiment cette personne, pas comme un curriculum vitae ou une notice biographique.
 
 Voici la matière première — des informations brutes sur cette personne. Ne les récite pas dans l'ordre. Ne fais pas de liste. Transforme-les en un récit fluide, en prose, où les détails surgissent naturellement dans le texte comme dans une vraie prise de parole :
 
 ${materiaux.join('\n')}
+
+${almaConversationText ? `\nVoici aussi des elements bruts issus d'une conversation preparatoire. Utilise-les seulement s'ils confirment ou enrichissent les informations ci-dessus, sans inventer au-dela :\n${almaConversationText}\n` : ''}
 
 Quelques exigences absolues :
 — Le texte commence par le prénom : "${prenom || 'Cette personne'}."
@@ -212,6 +244,8 @@ Quelques exigences absolues :
 — Il est organisé en paragraphes (4 à 6), chaque paragraphe développant une facette de la personne, pas une rubrique.
 - Utilise uniquement les informations fournies ci-dessus. N'invente jamais un autre prénom, une autre identité, une autre passion, une autre habitude ou une autre scène.
 - Si une information manque, reste sobre et général sur ce point au lieu d'inventer.
+- Le style demandé (${writingStyleLabel}) doit être perceptible dans la formulation, le rythme et les images choisies.
+- N'utilise jamais exactement le meme ton pour tous les projets : adapte reellement l'ecriture au style demande.
 — Si une anecdote est mentionnée ci-dessus, elle doit apparaître dans le texte, racontée en quelques phrases vivantes.
 — Si un message personnel est mentionné, intègre-le en le reformulant naturellement, jamais mot pour mot entre guillemets dans le texte.
 — Aucune liste à puces, aucun titre, aucun sous-titre dans le texte final.

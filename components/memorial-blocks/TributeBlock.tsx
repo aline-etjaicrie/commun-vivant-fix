@@ -7,12 +7,12 @@ interface TributeBlockProps {
     memorialId: string;
     template: any;
     type?: 'funeraire' | 'vivant' | 'objet';
-    funeraireMode?: 'both' | 'candle' | 'flower';
+    funeraireMode?: 'both' | 'candle' | 'flower' | 'none';
     labels?: TributeLabels;
 }
 
 export default function TributeBlock({ prenom, memorialId, template, type = 'funeraire', funeraireMode = 'both', labels }: TributeBlockProps) {
-    if (!prenom) return null;
+    if (!prenom || funeraireMode === 'none') return null;
 
     return (
         <TributeMemorial

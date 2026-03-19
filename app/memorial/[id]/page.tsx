@@ -1,35 +1,24 @@
 'use client';
+
 import { supabase } from '@/lib/supabase';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Home, Share2 } from 'lucide-react';
 import Footer from '@/components/Footer';
-import MemorialLayout from '@/components/MemorialLayout';
-import {
-  ProfileBlock,
-  TextBlock,
-  MessagesBlock,
-  GalleryBlock,
-  GoutsBlock,
-  TributeBlock,
-  LinksBlock,
-  FamilyBlock,
-  LocationBlock,
-  ContributeBlock,
-} from '@/components/memorial-blocks';
-import { getPhoto, blobToURL } from '@/lib/indexedDB';
-import { getTemplate } from '@/lib/templates';
-import { BlockType } from '@/lib/layouts';
 import ReportButton from '@/components/ReportButton';
+import PublishedMemorialRenderer from '@/components/memorial/PublishedMemorialRenderer';
+import { blobToURL, getPhoto } from '@/lib/indexedDB';
 import { resolveCommunTypeFromContext } from '@/lib/communTypes';
 import { resolveCommunTypeFromPayload } from '@/lib/almaProfiles';
-import { getDefaultTemplateIdForCommunType, getMemorialPreset, sanitizeBlockOrder } from '@/lib/memorialPresets';
+import {
+  buildThemeTemplate,
+  resolveCompositionModel,
+  resolveVisualTheme,
+  resolveWritingStyle,
+} from '@/lib/compositionStudio';
 import {
   applyTypographyPreference,
-  buildThematicSections,
   ensureAbsoluteUrl,
-  resolveIdentity,
+  formatIdentityForDisplay,
   resolveTypographyPreference,
   sanitizeGeneratedText,
 } from '@/lib/memorialRuntime';
@@ -49,6 +38,7 @@ export default function MemorialPage() {
       router.push('/');
       return;
     }
+
     const decodedId = decodeURIComponent(String(id));
 
     const fetchMemorial = async () => {
@@ -71,14 +61,27 @@ export default function MemorialPage() {
         }
 
         const payload = row.data ?? row;
+        const communType = payload?.communType
+          ? resolveCommunTypeFromPayload(payload.communType)
+          : resolveCommunTypeFromContext(payload?.context);
+
         const normalized = {
           ...payload,
-          identite: resolveIdentity(payload),
+          communType,
+          identite: formatIdentityForDisplay(payload),
           texteGenere: sanitizeGeneratedText(payload?.texteGenere),
+          visualTheme: resolveVisualTheme(payload?.visualTheme || payload?.template, communType),
+          compositionModel: resolveCompositionModel(payload?.compositionModel || payload?.layout, communType),
+          writingStyle: resolveWritingStyle(payload?.writingStyle || payload?.style, communType),
           liensWeb: (Array.isArray(payload?.liensWeb) ? payload.liensWeb : [])
-            .map((l: any, i: number) => ({ ...l, id: l?.id || `l-${i}`, url: ensureAbsoluteUrl(l?.url || '') }))
+            .map((l: any, i: number) => ({
+              ...l,
+              id: l?.id || `l-${i}`,
+              url: ensureAbsoluteUrl(l?.url || ''),
+            }))
             .filter((l: any) => l.url),
         };
+
         setMemorial(normalized);
 
         const medias = normalized?.medias || {};
@@ -133,14 +136,22 @@ export default function MemorialPage() {
             setAudioTitle(audio.nom || normalized?.gouts?.musique || null);
           }
         }
-      } catch (e) {
-        console.error('Erreur fetchMemorial:', e);
+      } catch (error) {
+        console.error('Erreur fetchMemorial:', error);
         router.push('/');
       }
     };
 
-    fetchMemorial();
+    void fetchMemorial();
   }, [params, router]);
+
+  const currentTemplate = useMemo(() => {
+    if (!memorial) return null;
+    return applyTypographyPreference(
+      buildThemeTemplate(memorial.visualTheme, memorial.communType),
+      resolveTypographyPreference(memorial.textTypography)
+    );
+  }, [memorial]);
 
   const handleShare = () => {
     const url = window.location.href;
@@ -155,7 +166,7 @@ export default function MemorialPage() {
     }
   };
 
-  if (!memorial) {
+  if (!memorial || !currentTemplate) {
     return (
       <div className="min-h-screen bg-memoir-bg flex items-center justify-center">
         <p className="text-memoir-blue">Chargement...</p>
@@ -176,165 +187,27 @@ export default function MemorialPage() {
     );
   }
 
-  const communType = memorial?.communType
-    ? resolveCommunTypeFromPayload(memorial.communType)
-    : resolveCommunTypeFromContext(memorial?.context);
-  const preset = getMemorialPreset(communType);
-
-  const {
-    identite,
-    gouts,
-    texteGenere,
-    template,
-    photoFilter,
-    message,
-    layout,
-    blockOrder,
-    liensWeb,
-    family,
-    location,
-    citation,
-    textTypography,
-    profilePhotoShape,
-    tributeMode,
-  } = memorial;
-
-  const baseTemplate = getTemplate(template || getDefaultTemplateIdForCommunType(communType));
-  const currentTemplate = applyTypographyPreference(baseTemplate, resolveTypographyPreference(textTypography));
-  const isLightBg = ['sepia-terre', 'encre-manuscrit'].includes(template || '');
-  const memorialId = params?.id as string;
-  const finalLayout = layout || preset.layout;
-  const finalBlockOrder: BlockType[] = sanitizeBlockOrder(blockOrder || preset.blockOrder);
-  const quoteText = citation || gouts?.citation || gouts?.phrase || '';
-  const thematicSections = buildThematicSections(memorial);
-
-  const blocks = {
-    profile: (
-      <ProfileBlock
-        prenom={identite?.prenom}
-        nom={identite?.nom}
-        dateNaissance={identite?.dateNaissance}
-        dateDeces={identite?.dateDeces}
-        photoUrl={profilePhotoUrl || undefined}
-        template={currentTemplate}
-        photoFilter={photoFilter}
-        photoShape={profilePhotoShape === 'square' ? 'square' : 'round'}
-      />
-    ),
-    text: (
-      <TextBlock
-        texte={sanitizeGeneratedText(texteGenere)}
-        template={currentTemplate}
-        isLightBg={isLightBg}
-        fontStyle={resolveTypographyPreference(textTypography)}
-        thematicSections={thematicSections}
-      />
-    ),
-    messages: (
-      <MessagesBlock
-        message={message}
-        template={currentTemplate}
-      />
-    ),
-    gallery: (
-      <GalleryBlock
-        medias={galleryMediasWithUrls}
-        photoFilter={photoFilter}
-        template={currentTemplate}
-        isLightBg={isLightBg}
-        presentationMode={memorial?.medias?.presentationMode || memorial?.presentationMode}
-      />
-    ),
-    gouts: (
-      <GoutsBlock
-        gouts={gouts}
-        audioUrl={audioUrl}
-        audioTitle={audioTitle || gouts?.musique}
-        template={currentTemplate}
-        isLightBg={isLightBg}
-      />
-    ),
-    candle: (
-      <TributeBlock
-        prenom={identite?.prenom || ''}
-        memorialId={memorialId}
-        template={currentTemplate}
-        funeraireMode={tributeMode === 'candle' || tributeMode === 'flower' ? tributeMode : 'both'}
-      />
-    ),
-    links: (
-      <LinksBlock
-        liens={liensWeb || []}
-        template={currentTemplate}
-      />
-    ),
-    family: (
-      <FamilyBlock
-        template={currentTemplate}
-        isLightBg={isLightBg}
-        story={family?.story || ''}
-        members={Array.isArray(family?.members) ? family.members : []}
-        pdfUrl={family?.pdfUrl || ''}
-        pdfName={family?.pdfName || ''}
-      />
-    ),
-    location: (
-      <LocationBlock
-        template={currentTemplate}
-        isLightBg={isLightBg}
-        location={location || null}
-      />
-    ),
-    contribute: (
-      <ContributeBlock
-        template={currentTemplate}
-        isLightBg={isLightBg}
-        links={liensWeb || []}
-      />
-    ),
-    quote: quoteText ? (
-      <div className="rounded-xl shadow p-6 italic text-lg" style={{ color: currentTemplate.colors.text, backgroundColor: isLightBg ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)' }}>
-        “{quoteText}”
-      </div>
-    ) : null,
-  };
-
   return (
     <main className="min-h-screen" style={{ backgroundColor: currentTemplate.colors.bg }}>
-      <section className="relative py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-12">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 transition-colors"
-              style={{ color: currentTemplate.colors.accent }}
-            >
-              <Home className="w-5 h-5" />
-              <span className="text-sm">Retour</span>
-            </Link>
+      <PublishedMemorialRenderer
+        memorial={memorial}
+        communType={memorial.communType}
+        memorialId={String(params?.id || '')}
+        currentTemplate={currentTemplate}
+        compositionModel={memorial.compositionModel}
+        visualTheme={memorial.visualTheme}
+        writingStyle={memorial.writingStyle}
+        profilePhotoUrl={profilePhotoUrl}
+        galleryMediasWithUrls={galleryMediasWithUrls}
+        audioUrl={audioUrl}
+        audioTitle={audioTitle || memorial?.gouts?.musique}
+        showActions
+        backHref="/"
+        backLabel="Retour"
+        onShare={handleShare}
+      />
 
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm"
-              style={{
-                backgroundColor: currentTemplate.colors.accent,
-                color: isLightBg ? '#fff' : currentTemplate.colors.bg
-              }}
-            >
-              <Share2 className="w-4 h-4" />
-              Partager
-            </button>
-          </div>
-
-          <MemorialLayout
-            layout={finalLayout}
-            blockOrder={finalBlockOrder}
-            blocks={blocks}
-          />
-        </div>
-      </section>
-
-      <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
+      <div className="max-w-7xl mx-auto px-4 pb-8 flex justify-end">
         <ReportButton />
       </div>
 

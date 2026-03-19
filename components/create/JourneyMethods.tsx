@@ -54,13 +54,14 @@ export default function JourneyMethods({
               <MessageCircle className="w-8 h-8" />
             </div>
             <h3 className="text-2xl font-serif italic text-memoir-blue mb-3">
-              {isProCeremony ? 'Module Solenn' : 'Raconter avec Alma'}
+              {isProCeremony ? 'Module Solenn' : 'Se faire aider par ALMA'}
             </h3>
             <p className="text-memoir-blue/60 text-sm leading-relaxed mb-6 flex-grow">
               {isProCeremony
-                ? 'Redaction de ceremonies civiles en 4 ecrans: collecte, generation, edition, historique.'
-                : 'Assistant conversationnel adapte au type de commun choisi.'}
+                ? 'Rédaction de cérémonies civiles en 4 écrans : collecte, génération, édition, historique.'
+                : 'ALMA peut vous aider à formuler vos réponses, à votre rythme. Vous gardez toujours la main sur le texte.'}
             </p>
+            <p className="text-xs uppercase tracking-[0.22em] text-memoir-blue/35">Première version en 5 à 10 min</p>
           </Link>
 
           <Link
@@ -75,8 +76,9 @@ export default function JourneyMethods({
             </div>
             <h3 className="text-2xl font-serif italic text-memoir-blue mb-3">Questionnaire</h3>
             <p className="text-memoir-blue/60 text-sm leading-relaxed mb-6 flex-grow">
-              Version structuree specifique au type de commun.
+              Un cadre simple et progressif pour aller à l’essentiel, étape après étape.
             </p>
+            <p className="text-xs uppercase tracking-[0.22em] text-memoir-blue/35">Première version en 5 à 10 min</p>
           </Link>
 
           <Link
@@ -89,10 +91,11 @@ export default function JourneyMethods({
             <div className="w-16 h-16 bg-memoir-bg rounded-2xl flex items-center justify-center text-memoir-blue/60 mb-6 group-hover:bg-memoir-blue/60 group-hover:text-white transition-colors">
               <PenTool className="w-8 h-8" />
             </div>
-            <h3 className="text-2xl font-serif italic text-memoir-blue mb-3">Ecriture libre</h3>
+            <h3 className="text-2xl font-serif italic text-memoir-blue mb-3">Écriture libre</h3>
             <p className="text-memoir-blue/60 text-sm leading-relaxed mb-6 flex-grow">
-              Redaction manuelle, avec toutes les options d'edition ensuite.
+              Rédaction manuelle, pour écrire à votre rythme puis reprendre ensuite la mise en forme.
             </p>
+            <p className="text-xs uppercase tracking-[0.22em] text-memoir-blue/35">Vous avancez à votre rythme</p>
           </Link>
         </div>
       </div>

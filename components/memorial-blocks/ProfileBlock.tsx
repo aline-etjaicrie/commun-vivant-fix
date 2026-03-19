@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import RawImage from '@/components/RawImage';
+import { formatDisplayNamePart } from '@/lib/memorialRuntime';
 
 interface ProfileBlockProps {
   prenom?: string;
@@ -38,7 +39,7 @@ export default function ProfileBlock({
     adouci: 'brightness(1.1) contrast(0.9) saturate(0.8)',
   };
 
-  const fullName = [prenom, nom].filter(Boolean).join(' ').trim() || 'Hommage';
+  const fullName = [formatDisplayNamePart(prenom), formatDisplayNamePart(nom)].filter(Boolean).join(' ').trim() || 'Hommage';
   const shapeClass = photoShape === 'square' ? 'rounded-2xl' : 'rounded-full';
   const isCelebration = String(template?.id || '').startsWith('vivant-');
   const isTransmission = String(template?.id || '').startsWith('transmission-');
@@ -135,7 +136,7 @@ export default function ProfileBlock({
 
       {isCelebration ? (
         <p className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: template.colors.accent }}>
-          Celebration
+          Célébration
         </p>
       ) : null}
       {isTransmission ? (

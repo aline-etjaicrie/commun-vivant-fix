@@ -1,3 +1,6 @@
+import type { CompositionModelId, VisualThemeId, WritingStyleId } from '@/lib/compositionStudio';
+import type { TextTypography, TributeDisplayMode } from '@/lib/memorialRuntime';
+
 export interface UserMemorialItem {
   id: string;
   title: string;
@@ -20,6 +23,13 @@ export interface UserMemorialItem {
   pendingMessagesCount: number;
   publicUrl: string;
   imageThemes?: string[];
+  compositionModel?: CompositionModelId;
+  visualTheme?: VisualThemeId;
+  writingStyle?: WritingStyleId;
+  textTypography?: TextTypography;
+  tributeMode?: TributeDisplayMode;
+  audioTitle?: string | null;
+  audioEnabled?: boolean;
 }
 
 export interface UserDashboardData {

@@ -64,7 +64,7 @@ export const getSteps = (
           id: 'duree',
           label: 'Durée cible du texte (minutes)',
           type: 'text',
-          placeholder: 'Ex: 5 à 7',
+          placeholder: 'Ex. : 5 à 7',
           path: 'ceremonyContext.duration',
         }
       ]
@@ -85,22 +85,22 @@ export const getSteps = (
           id: 'prenom',
           label: isProCeremony ? 'Prénom du défunt' : 'Prénom',
           type: 'text',
-          placeholder: 'Ex: Jean',
+          placeholder: 'Ex. : Jean',
           path: 'identite.prenom',
         },
         {
           id: 'nom',
-          label: 'Nom',
+          label: 'Nom (facultatif)',
           type: 'text',
           optional: true,
-          placeholder: 'Ex: Dupont',
+          placeholder: 'Ex. : Dupont',
           path: 'identite.nom',
         },
         {
           id: 'dateNaissance',
           label: 'Année de naissance',
           type: 'text',
-          placeholder: 'Ex: 1954',
+          placeholder: 'Ex. : 1954',
           path: 'identite.dateNaissance',
         },
       ] : []),
@@ -111,13 +111,13 @@ export const getSteps = (
           id: 'prenom', // Reuse 'prenom' for Name
           label: 'Nom de l\'objet ou du lieu',
           type: 'text',
-          placeholder: 'Ex: La montre de Grand-Père',
+          placeholder: 'Ex. : la montre de grand-père',
         },
         {
           id: 'dateNaissance', // Start date
           label: 'Depuis quand est-il dans la famille ?',
           type: 'text',
-          placeholder: 'Ex: 1920, ou "depuis toujours"',
+          placeholder: 'Ex. : 1920, ou "depuis toujours"',
         }
       ] : []),
 
@@ -134,7 +134,7 @@ export const getSteps = (
       questions: [
         {
           id: 'type',
-          label: 'Vous êtes...',
+          label: 'Vous êtes…',
           type: 'select',
           options: [],
           path: 'lienPersonne.type'
@@ -155,7 +155,7 @@ export const getSteps = (
     steps.push({
       id: 'modeContributeur',
       title: 'Participation',
-      description: 'Comment souhaitez-vous construire ce mémorial ?',
+      description: 'Comment souhaitez-vous construire ce portrait ?',
       questions: [
         {
           id: 'mode',
@@ -206,7 +206,7 @@ export const getSteps = (
     title: isProCeremony ? 'Trois traits majeurs' : 'Trois mots',
     description: isProCeremony
       ? 'Trois traits à faire entendre dans la cérémonie.'
-      : (isObject ? 'Choisissez 3 mots qui définissent cet objet.' : 'Choisissez 3 mots pour le/la décrire.'),
+      : (isObject ? 'Choisissez 3 mots qui définissent cet objet.' : 'Choisissez 3 mots pour la décrire.'),
     questions: [
       {
         id: 'adjectifs',
@@ -254,7 +254,7 @@ export const getSteps = (
     title: isProCeremony ? 'Noyau de cérémonie' : 'En une phrase',
     description: isProCeremony
       ? 'En une phrase, quel souvenir ou quel message doit absolument être entendu ?'
-      : (isObject ? 'Pourquoi cet objet est-il important pour vous ?' : (isPerson ? `Si vous deviez résumer ${data.identite?.prenom || 'cette personne'} en une phrase ?` : 'Votre résumé')),
+      : (isObject ? 'Pourquoi cet objet est-il important pour vous ?' : (isPerson ? `Si vous deviez résumer ${data.identite?.prenom || 'cette personne'} en une phrase, laquelle garderiez-vous ?` : 'Votre résumé')),
     questions: [
       {
         id: 'content',
@@ -314,7 +314,7 @@ export const getSteps = (
             label: 'Un talent, une passion ou un goût marquant',
             type: 'text',
             optional: true,
-            placeholder: 'Ex: le piano, le jardinage, l’accueil des autres...',
+            placeholder: 'Ex. : le piano, le jardinage, l’accueil des autres...',
             path: 'talents.talent'
           },
           {
@@ -355,7 +355,7 @@ export const getSteps = (
   if (isPerson && !isProCeremony) {
     steps.push({
       id: 'famille',
-      title: 'Racines & Famille',
+      title: 'Racines & famille',
       description: 'Pour situer cette personne dans son histoire familiale.',
       questions: [
         {
@@ -363,15 +363,15 @@ export const getSteps = (
           label: 'Noms des parents',
           type: 'text',
           optional: true,
-          placeholder: 'Ex: Marie & Pierre Dupont',
+          placeholder: 'Ex. : Marie & Pierre Dupont',
           path: 'famille.parents'
         },
         {
           id: 'conjoint',
-          label: 'Conjoint(e) / Partenaire',
+          label: 'Conjoint(e) / partenaire',
           type: 'text',
           optional: true,
-          placeholder: 'Ex: Sophie',
+          placeholder: 'Ex. : Sophie',
           path: 'famille.conjoint'
         },
         {
@@ -379,7 +379,7 @@ export const getSteps = (
           label: 'Enfants (prénoms)',
           type: 'textarea',
           optional: true,
-          placeholder: 'Ex: Lucas, Emma, Thomas...',
+          placeholder: 'Ex. : Lucas, Emma, Thomas...',
           path: 'famille.enfants'
         }
       ]
@@ -389,14 +389,14 @@ export const getSteps = (
   // STEP 9: Talents & Passions
   steps.push({
     id: 'talents',
-    title: 'Talents & Passions',
-    description: isObject ? 'A quoi cet objet servait-il ?' : `Qu'est-ce qui l'${isLiving ? 'anime' : 'animait'} au quotidien ?`,
+    title: 'Talents & passions',
+    description: isObject ? 'À quoi cet objet servait-il ?' : `Qu'est-ce qui l'${isLiving ? 'anime' : 'animait'} au quotidien ?`,
     questions: [
       {
         id: 'talent',
         label: isObject ? 'Usage principal' : 'Un talent ou une passion ?',
         type: 'text',
-        placeholder: isObject ? 'Ex: Coudre, écrire...' : 'Ex: Le piano, le jardinage...',
+        placeholder: isObject ? 'Ex. : coudre, écrire...' : 'Ex. : le piano, le jardinage...',
         path: 'talents.talent'
       },
       {
@@ -412,7 +412,7 @@ export const getSteps = (
         label: 'Sports ou activités physiques',
         type: 'text',
         optional: true,
-        placeholder: 'Ex: randonnée, natation, tennis...',
+        placeholder: 'Ex. : randonnée, natation, tennis...',
         path: 'talents.sport'
       },
       {
@@ -452,7 +452,7 @@ export const getSteps = (
           label: 'Les personnes qui comptent dans son histoire',
           type: 'textarea',
           optional: true,
-          placeholder: 'Famille choisie, mentors, voisins, collegues proches...',
+          placeholder: 'Famille choisie, mentors, voisins, collègues proches...',
           path: 'liens.personnesQuiComptent'
         },
         {
@@ -468,7 +468,7 @@ export const getSteps = (
           label: 'Voyages marquants',
           type: 'textarea',
           optional: true,
-          placeholder: 'Pays, villes, souvenirs de voyage, habitudes de deplacement...',
+          placeholder: 'Pays, villes, souvenirs de voyage, habitudes de déplacement...',
           path: 'liens.voyages'
         },
         {
@@ -494,7 +494,7 @@ export const getSteps = (
           label: 'Qui lira le texte ?',
           type: 'text',
           optional: true,
-          placeholder: 'Ex: maître de cérémonie, proche, officiant',
+          placeholder: 'Ex. : maître de cérémonie, proche, officiant',
           path: 'ceremonyContext.speaker'
         },
         {
@@ -512,14 +512,14 @@ export const getSteps = (
   // STEP 10: Une Fierté / Réalisation
   steps.push({
     id: 'fierte',
-    title: 'Une Fierté',
+    title: 'Une fierté',
     description: isObject ? 'Quel est son détail le plus remarquable ?' : `Quelle ${isLiving ? 'est' : 'était'} sa plus grande fierté ou réalisation ?`,
     questions: [
       {
         id: 'content',
         label: 'Racontez-nous',
         type: 'textarea',
-        placeholder: 'Ex: Avoir construit sa maison, ses enfants, un voyage...',
+        placeholder: 'Ex. : avoir construit sa maison, élevé ses enfants, entrepris un voyage...',
         path: 'fierte'
       }
     ]
@@ -529,7 +529,7 @@ export const getSteps = (
   if (isPerson && !isProCeremony) {
     steps.push({
       id: 'gouts',
-      title: 'Jardin Secret',
+      title: 'Jardin secret',
       description: `Ces petits détails qui n'${isLiving ? 'appartiennent' : 'appartenaient'} qu'à elle/lui.`,
       questions: [
         {
@@ -545,7 +545,7 @@ export const getSteps = (
           label: 'Une expression ou citation favorite ?',
           type: 'text',
           optional: true,
-          placeholder: 'Ex: "La vie est belle"',
+          placeholder: 'Ex. : "La vie est belle"',
           path: 'gouts.citation'
         },
         {
@@ -578,7 +578,7 @@ export const getSteps = (
           label: 'Année de décès',
           type: 'text',
           optional: true,
-          placeholder: 'Ex: 2023',
+          placeholder: 'Ex. : 2023',
           path: 'identite.dateDeces'
         }
       ]
@@ -588,7 +588,7 @@ export const getSteps = (
   // STEP 12: Message Libre
   steps.push({
     id: 'messageLibre',
-    title: isProCeremony ? 'Clôture de cérémonie' : 'Message Libre',
+    title: isProCeremony ? 'Clôture de cérémonie' : 'Message libre',
     description: isProCeremony
       ? 'Ajoutez la formule de clôture attendue (remerciements, transition, silence, musique).'
       : 'Avez-vous un dernier message à transmettre ?',

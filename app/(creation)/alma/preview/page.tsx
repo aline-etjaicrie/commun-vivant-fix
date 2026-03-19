@@ -250,7 +250,7 @@ function AlmaPreviewContent() {
       }
     } catch (error) {
       console.error('Erreur déblocage:', error);
-      setUnlockError("Nous n avons pas encore pu ouvrir la suite du parcours. Vous pouvez reessayer dans un instant sans perdre votre apercu.");
+      setUnlockError("Nous n’avons pas encore pu ouvrir la suite du parcours. Vous pouvez réessayer dans un instant sans perdre votre aperçu.");
     } finally {
       setIsUnlocking(false);
     }

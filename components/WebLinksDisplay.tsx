@@ -26,17 +26,23 @@ export default function WebLinksDisplay({ liens, accentColor, textColor, bgColor
 
   return (
     <div 
-      className="rounded-xl shadow p-6"
+      className="rounded-[30px] border p-6 shadow-[0_24px_70px_rgba(15,23,38,0.08)] md:p-7"
       style={{ 
-        backgroundColor: bgColor === '#FFFFFF' ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
+        backgroundColor: bgColor === '#FFFFFF' ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.05)',
+        border: `1px solid ${accentColor}22`,
       }}
     >
-      <h3 
-        className="text-2xl font-bold mb-4"
-        style={{ color: textColor }}
-      >
-        Liens
-      </h3>
+      <div className="mb-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: accentColor }}>
+          Ressources
+        </p>
+        <h3 
+          className="mt-2 text-[1.85rem] font-serif leading-tight"
+          style={{ color: textColor }}
+        >
+          Liens utiles
+        </h3>
+      </div>
       <div className="space-y-3">
         {normalizedLinks.map((lien) => (
           <a
@@ -44,17 +50,28 @@ export default function WebLinksDisplay({ liens, accentColor, textColor, bgColor
             href={lien.normalizedUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors group"
-            style={{ border: `1px solid ${accentColor}30` }}
+            className="group flex items-start gap-4 rounded-[24px] p-5 transition-colors"
+            style={{
+              border: `1px solid ${accentColor}26`,
+              backgroundColor: bgColor === '#FFFFFF' ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)',
+            }}
           >
-            <ExternalLink 
-              className="w-5 h-5 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform"
-              style={{ color: accentColor }}
-            />
-            <div className="flex-1 min-w-0">
+            <div
+              className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+              style={{ backgroundColor: `${accentColor}15` }}
+            >
+              <ExternalLink 
+                className="h-4 w-4 transition-transform group-hover:scale-110"
+                style={{ color: accentColor }}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: accentColor }}>
+                Lien utile
+              </p>
               {lien.titre && (
                 <p 
-                  className="font-medium mb-1"
+                  className="mt-2 text-base font-medium"
                   style={{ color: textColor }}
                 >
                   {lien.titre}
@@ -62,15 +79,15 @@ export default function WebLinksDisplay({ liens, accentColor, textColor, bgColor
               )}
               {lien.description && (
                 <p 
-                  className="text-sm mb-1"
-                  style={{ color: textColor, opacity: 0.7 }}
+                  className="mt-2 text-sm leading-6"
+                  style={{ color: textColor, opacity: 0.74 }}
                 >
                   {lien.description}
                 </p>
               )}
               <p 
-                className="text-xs truncate"
-                style={{ color: accentColor, opacity: 0.7 }}
+                className="mt-3 truncate text-xs"
+                style={{ color: accentColor, opacity: 0.72 }}
               >
                 {lien.normalizedUrl}
               </p>

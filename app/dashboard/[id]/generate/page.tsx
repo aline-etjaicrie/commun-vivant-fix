@@ -5,6 +5,13 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Sparkles, Users, FileText, CheckCircle } from 'lucide-react';
 import Title from '@/components/Title';
+import { STORAGE_KEYS } from '@/lib/creationFlowStorage';
+import { buildGenerationRequestData } from '@/lib/buildGenerationRequestData';
+import {
+    buildWritingStylePromptBlock,
+    getWritingStyle,
+    resolveWritingStyle,
+} from '@/lib/compositionStudio';
 import { resolveIdentity } from '@/lib/memorialRuntime';
 import { createClient } from '@/lib/supabase/client';
 import { getValidateUrl } from '@/lib/validateUrl';
@@ -62,6 +69,7 @@ const GeneratePage = () => {
             const almaData = almaFuneral || almaLiving || almaObject;
 
             const mediaData = localStorage.getItem('mediaData');
+            const previewData = localStorage.getItem('memorialPreviewData');
 
             // Try to find questionnaire data (final key first, then any draft key)
             const questionnaireFinal = localStorage.getItem('questionnaireData');
@@ -75,6 +83,7 @@ const GeneratePage = () => {
             setRealData({
                 alma: safeParse(almaData),
                 media: safeParse(mediaData),
+                preview: safeParse(previewData),
                 questionnaire: questionnaireData,
                 context: finalization?.context || flow?.context || context,
                 communType: finalization?.communType || flow?.communType || null,
@@ -103,13 +112,21 @@ const GeneratePage = () => {
         const generatePromise = (async () => {
             const conversationHistory = realData?.alma || [];
             const questionnaire = realData?.questionnaire || {};
+            const previewData = realData?.preview || {};
             const context = realData?.context || localStorage.getItem('context') || 'funeral';
+            const communType = realData?.communType || 'deces';
             const validatedThemes = Array.isArray(realData?.media?.imageThemes)
                 ? realData.media.imageThemes
                 : Array.isArray(realData?.media?.memoryImageEnergies)
                 ? realData.media.memoryImageEnergies
                 : [];
             const identity = resolveIdentity(questionnaire);
+            const writingStyleId = resolveWritingStyle(
+                previewData?.writingStyle || previewData?.style || questionnaire?.writingStyle || questionnaire?.style,
+                communType
+            );
+            const selectedWritingStyle = getWritingStyle(writingStyleId);
+            const writingStylePromptBlock = buildWritingStylePromptBlock(writingStyleId);
             const liens = questionnaire.liens || questionnaire.liensVie || {};
             const occasion = questionnaire.occasion || {};
 
@@ -136,6 +153,14 @@ const GeneratePage = () => {
                    Precisions sur l'occasion : ${occasion?.details || ''}
                   `
                 : "Aucune donnée de questionnaire disponible.";
+            const requestData = buildGenerationRequestData({
+                questionnaire,
+                media: realData?.media,
+                previewData,
+                context,
+                communType,
+                almaConversationText: conversationText,
+            });
 
             let dynamicConsignes = '';
             let goal = '';
@@ -166,7 +191,9 @@ const GeneratePage = () => {
             OBJECTIF : ${goal}
             
             CONSIGNES GÉNÉRALES :
-            - Utilise un ton solennel, chaleureux et narratif. 
+            ${writingStylePromptBlock}
+            - Respecte ce style d'écriture du debut a la fin. Le rendu doit etre nettement perceptible.
+            - N'utilise pas un ton generique : adapte le rythme, les images et la formulation au style "${selectedWritingStyle.label}".
             - Divise le texte en paragraphes thématiques clairs avec des titres élégants.
             - Le texte doit être fidèle aux anecdotes et traits de caractère décrits ci-dessous.
             - Prends en compte l'ambiance suggérée par les souvenirs (couleurs, odeurs, paysages) pour créer une atmosphère immersive.
@@ -207,7 +234,8 @@ const GeneratePage = () => {
                     },
                     body: JSON.stringify({
                         memoryId: id, // Pass the memory ID from params
-                        prompt
+                        prompt,
+                        data: requestData,
                     })
                 });
                 const data = await parseJsonResponse(res);
@@ -358,7 +386,7 @@ const GeneratePage = () => {
                                 <li>• L'IA analyse votre conversation avec Alma</li>
                                 <li>• Elle identifie les thèmes, anecdotes et valeurs communes</li>
                                 <li>• Les souvenirs deja recueillis aupres des proches sont integres avec discretion</li>
-                                <li>• Le texte est rédigé dans un style solennel et poétique</li>
+                                <li>• Le texte respecte le ton choisi dans l’atelier de composition</li>
                                 <li>• Vous pourrez ensuite le relire, modifier et approuver</li>
                             </ul>
                         </div>

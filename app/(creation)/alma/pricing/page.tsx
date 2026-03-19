@@ -182,7 +182,7 @@ export default function AlmaPricingPage() {
       window.location.href = url;
     } catch (error) {
       console.error('Erreur paiement:', error);
-      setPaymentError("Nous n avons pas encore pu preparer le paiement. Vos choix sont conserves et vous pouvez reessayer dans un instant.");
+      setPaymentError("Nous n’avons pas encore pu préparer le paiement. Vos choix sont conservés et vous pouvez réessayer dans un instant.");
       setIsProcessing(false);
     }
   };

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { resolveWritingStyle } from '@/lib/compositionStudio';
 import { generateMistralPrompt } from '@/lib/generateMistralPrompt';
 import { buildMemoryFallbackText } from '@/lib/memoryFallbackText';
 import { resolveIdentity } from '@/lib/memorialRuntime';
@@ -42,10 +43,32 @@ function hasTruncatedClosing(value: string): boolean {
   );
 }
 
+function collectExpectedKeyFacts(data: any): string[] {
+  const facts = [
+    data?.identite?.dateNaissance,
+    data?.talents?.talent,
+    data?.talents?.passions,
+    data?.gouts?.lieu,
+    data?.gouts?.phrase,
+    data?.gouts?.citation,
+    ...(Array.isArray(data?.valeurs?.selected) ? data.valeurs.selected : []),
+  ];
+
+  return Array.from(
+    new Set(
+      facts
+        .map((value) => String(value || '').trim())
+        .filter((value) => value.length >= 4)
+    )
+  ).slice(0, 3);
+}
+
 function validateGeneratedMemorialText(value: string, data: any): { ok: true } | { ok: false; reason: string } {
   const identity = resolveIdentity(data || {});
   const expectedFirstName = String(identity?.prenom || '').trim();
   const normalizedExpectedFirstName = normalizeToken(expectedFirstName);
+  const normalizedText = normalizeToken(value);
+  const expectedKeyFacts = collectExpectedKeyFacts(data || {});
 
   if (hasTruncatedClosing(value)) {
     return { ok: false, reason: 'truncated_closing' };
@@ -60,8 +83,15 @@ function validateGeneratedMemorialText(value: string, data: any): { ok: true } |
     return { ok: false, reason: 'unexpected_opening_identity' };
   }
 
-  if (!normalizeToken(value).includes(normalizedExpectedFirstName)) {
+  if (!normalizedText.includes(normalizedExpectedFirstName)) {
     return { ok: false, reason: 'missing_subject_identity' };
+  }
+
+  if (
+    expectedKeyFacts.length > 0 &&
+    !expectedKeyFacts.some((fact) => normalizedText.includes(normalizeToken(fact)))
+  ) {
+    return { ok: false, reason: 'missing_key_fact' };
   }
 
   return { ok: true };
@@ -195,6 +225,14 @@ export async function POST(req: NextRequest) {
 
     const memory = access.memory;
     const supabase = access.admin;
+    const rawCommunType = memory?.data?.communType || requestData?.communType;
+    const communType =
+      rawCommunType === 'hommage-vivant' ||
+      rawCommunType === 'transmission-familiale' ||
+      rawCommunType === 'memoire-objet' ||
+      rawCommunType === 'pro-ceremonie'
+        ? rawCommunType
+        : 'deces';
 
     if (requestData) {
       const { error: updateDataError } = await supabase
@@ -208,6 +246,11 @@ export async function POST(req: NextRequest) {
         memory.data = requestData;
       }
     }
+
+    const requestedWritingStyle = resolveWritingStyle(
+      memory?.data?.writingStyle || memory?.data?.style,
+      communType
+    );
 
     // Use custom prompt if provided, otherwise generate from memory data
     const basePrompt = customPrompt || generateMistralPrompt(memory.data || {});
@@ -265,6 +308,7 @@ export async function POST(req: NextRequest) {
         contributionCount: contributionContext.contributionCount,
         usedFallback: shouldUseFallback,
         fallbackReason,
+        writingStyle: requestedWritingStyle,
       },
     });
 
@@ -275,12 +319,13 @@ export async function POST(req: NextRequest) {
       actorRole: access.actorRole,
       source: 'generation_api',
       versionKind: customPrompt ? 'generated_custom_prompt' : 'generated',
-      style: memory.style || null,
+      style: requestedWritingStyle || memory.style || null,
       contentText: generatedText,
       metadata: {
         contributionCount: contributionContext.contributionCount,
         usedFallback: shouldUseFallback,
         fallbackReason,
+        writingStyle: requestedWritingStyle,
       },
     });
 

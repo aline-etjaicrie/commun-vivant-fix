@@ -35,13 +35,13 @@ function MethodSelectionContent() {
           <div className="mb-12 text-center">
             <Link href="/" className="inline-flex items-center text-memoir-blue/40 hover:text-memoir-blue transition-colors mb-6 text-sm font-bold uppercase tracking-widest">
               <ChevronLeft className="w-4 h-4 mr-1" />
-              Retour a l'accueil
+              Retour à l’accueil
             </Link>
             <h1 className="text-3xl md:text-5xl font-serif italic text-memoir-blue leading-tight mb-4">
-              Quel type de commun voulez-vous creer ?
+              Quel type de commun voulez-vous créer ?
             </h1>
             <p className="text-memoir-blue/60 text-lg font-light">
-              Cinq parcours distincts: quatre publics et un professionnel pompes funebres.
+              Cinq parcours distincts : quatre publics et un professionnel pour les pompes funèbres.
             </p>
           </div>
 

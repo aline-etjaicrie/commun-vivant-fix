@@ -86,7 +86,7 @@ function PaymentRecapContent() {
 
         } catch (error) {
             console.error(error);
-            setPaymentError("Le paiement n a pas pu etre prepare pour le moment. Rien n est perdu dans votre commande, et vous pouvez reessayer dans un instant.");
+            setPaymentError("Le paiement n’a pas pu être préparé pour le moment. Rien n’est perdu dans votre commande, et vous pouvez réessayer dans un instant.");
             setLoading(false);
         }
     };
@@ -97,6 +97,10 @@ function PaymentRecapContent() {
             {/* Header */}
             <div className="text-center mb-12">
                 <Title as="h1" className="text-3xl font-serif text-[#1A1A2E] mb-2">Récapitulatif de votre commande</Title>
+                <p className="mt-4 max-w-2xl mx-auto text-sm text-[#1A1A2E]/60 leading-relaxed">
+                    La création réelle de votre espace est payante. Ce règlement couvre l’hébergement, la mise en ligne,
+                    le QR code et l’administration simple du projet.
+                </p>
                 <div className="w-16 h-1 bg-[#D4AF37] mx-auto rounded-full"></div>
             </div>
 
@@ -131,6 +135,16 @@ function PaymentRecapContent() {
                             <span className="w-2 h-2 rounded-full bg-[#1A1A2E]"></span>
                             Votre commande
                         </h3>
+
+                        <div className="mb-6 rounded-2xl bg-stone-50 px-4 py-4 text-sm text-[#1A1A2E]/70">
+                            <p className="font-medium text-[#1A1A2E]">Ce qui est inclus</p>
+                            <ul className="mt-3 space-y-2">
+                                <li className="flex items-start gap-2"><Check className="w-4 h-4 text-[#D4AF37] mt-0.5 shrink-0" /> Hébergement du site</li>
+                                <li className="flex items-start gap-2"><Check className="w-4 h-4 text-[#D4AF37] mt-0.5 shrink-0" /> QR code</li>
+                                <li className="flex items-start gap-2"><Check className="w-4 h-4 text-[#D4AF37] mt-0.5 shrink-0" /> Administration simple</li>
+                                <li className="flex items-start gap-2"><Check className="w-4 h-4 text-[#D4AF37] mt-0.5 shrink-0" /> Mise en ligne par nos soins</li>
+                            </ul>
+                        </div>
 
                         <div className="space-y-4 mb-6">
                             <div className="flex justify-between items-baseline text-[#1A1A2E]">
@@ -175,6 +189,11 @@ function PaymentRecapContent() {
                         Paiement sécurisé
                     </h3>
 
+                    <p className="relative z-10 mb-6 text-sm leading-relaxed text-white/65">
+                        Vous finalisez ici un vrai projet, hébergé et prêt à être mis en ligne. Rien n’est prélevé avant
+                        l’ouverture du checkout Stripe.
+                    </p>
+
                     <div className="space-y-6 relative z-10">
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Email de confirmation</label>
@@ -216,7 +235,7 @@ function PaymentRecapContent() {
                         {paymentError && (
                             <FlowNotice
                                 variant="error"
-                                title="Le paiement n a pas encore pu demarrer"
+                                title="Le paiement n’a pas encore pu démarrer"
                                 message={paymentError}
                             />
                         )}

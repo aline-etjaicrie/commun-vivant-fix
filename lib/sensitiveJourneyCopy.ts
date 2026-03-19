@@ -39,13 +39,13 @@ const DEFAULT_COPY: SensitiveJourneyCopy = {
   continueToDraftLabel: 'Relire ma première version',
   generateTitle: 'Préparer une première version du texte',
   generateSubtitle:
-    'Nous allons rédiger une base sensible et fidèle à ce que vous avez déjà partagé. Vous pourrez ensuite tout relire et ajuster.',
-  generatePreparing: 'Nous rassemblons les éléments importants...',
-  generateInProgress: 'Nous rédigeons une première version avec délicatesse...',
-  generateFinishing: 'Nous mettons le texte en forme pour la relecture...',
+    'À partir de vos réponses, nous vous proposons une première version fidèle et modifiable.',
+  generatePreparing: 'Préparation du texte en cours…',
+  generateInProgress: 'Cela peut prendre quelques instants.',
+  generateFinishing: 'Nous finalisons la première version pour la relecture…',
   generationErrorTitle: "Le texte n'a pas encore pu être préparé",
   generationErrorBody:
-    "Rien n'est perdu. Vos réponses et vos médias sont conservés. Vous pouvez réessayer dans un instant.",
+    "La première version n'a pas pu être finalisée correctement. Réessayons.",
   missingDataTitle: 'Il manque encore quelques repères',
   missingDataBody:
     "Pour proposer un texte juste, nous avons besoin d'une trame issue du questionnaire ou de la conversation avec Alma.",

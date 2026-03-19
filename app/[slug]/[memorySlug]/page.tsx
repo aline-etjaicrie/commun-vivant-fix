@@ -5,15 +5,16 @@ import { resolvePublicMemorial, trackMemoryVisit } from '@/lib/publicMemorials';
 
 export const revalidate = 0;
 
-export default async function PublicCanonicalPage(props: {
-  params: Promise<{ memorySlug: string }>;
+export default async function PublicB2BPage(props: {
+  params: Promise<{ slug: string; memorySlug: string }>;
   searchParams: Promise<{ ref?: string }>;
 }) {
   const params = await props.params;
   const searchParams = await props.searchParams;
+  const agencySlug = decodeURIComponent(params.slug || '');
   const memorySlug = decodeURIComponent(params.memorySlug || '');
 
-  const resolved = await resolvePublicMemorial({ memorySlug });
+  const resolved = await resolvePublicMemorial({ memorySlug, agencySlug });
 
   if (resolved.status === 'not_found') return notFound();
   if (resolved.status === 'unpublished') {
@@ -21,6 +22,7 @@ export default async function PublicCanonicalPage(props: {
       <PublicUnavailablePage
         title="Cet espace n'est pas encore publie"
         message="Le memorial est en brouillon ou archive."
+        agencyName={agencySlug}
       />
     );
   }
@@ -28,7 +30,8 @@ export default async function PublicCanonicalPage(props: {
     return (
       <PublicUnavailablePage
         title="Cet espace est temporairement indisponible"
-        message="Merci de contacter l'agence ou la famille."
+        message="Merci de contacter l'agence."
+        agencyName={agencySlug}
       />
     );
   }

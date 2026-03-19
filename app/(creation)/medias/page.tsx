@@ -255,13 +255,13 @@ export default function MediasPage() {
       await persistSelectedThemes(next);
       setFeedback({
         variant: 'success',
-        title: 'Les themes proposes sont prets',
+        title: 'Les thèmes proposés sont prêts',
         message: 'Vous pouvez les garder, en retirer certains, ou ajouter vos propres mots pour affiner encore.',
       });
     } catch (error: any) {
       setFeedback({
         variant: 'error',
-        title: "L analyse visuelle n est pas disponible pour le moment",
+        title: "L’analyse visuelle n’est pas disponible pour le moment",
         message: error?.message || 'Vous pouvez poursuivre sans cette aide, puis revenir plus tard si vous le souhaitez.',
       });
     } finally {
@@ -450,8 +450,8 @@ export default function MediasPage() {
                     console.error('Erreur upload audio', error);
                     setFeedback({
                       variant: 'error',
-                      title: "Le fichier audio n a pas encore pu etre ajoute",
-                      message: 'Vous pouvez reessayer avec un autre fichier, ou continuer sans audio pour le moment.',
+                      title: "Le fichier audio n’a pas encore pu être ajouté",
+                      message: 'Vous pouvez réessayer avec un autre fichier, ou continuer sans audio pour le moment.',
                     });
                   }
                 }
@@ -573,7 +573,7 @@ export default function MediasPage() {
             className="flex items-center gap-2 px-8 py-4 bg-memoir-gold text-white rounded-lg font-medium text-lg hover:bg-memoir-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
             <Check className="w-5 h-5" />
-            Continuer vers la generation du texte
+            Continuer vers la génération du texte
           </button>
         </div>
 

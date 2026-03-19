@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/user-dashboard/_shared';
 import { resolveCommunTypeFromContext, type CommunType } from '@/lib/communTypes';
+import {
+  resolveCompositionModel,
+  resolveVisualTheme,
+  resolveWritingStyle,
+} from '@/lib/compositionStudio';
+import { resolveTypographyPreference, type TributeDisplayMode } from '@/lib/memorialRuntime';
 import { normalizePaymentStatus } from '@/lib/paymentStatus';
 import { buildB2CPath, normalizePublicUrlOrPath } from '@/lib/publicUrls';
 import {
@@ -34,6 +40,11 @@ function normalizeGenerationStatus(value?: string | null): 'not_started' | 'gene
   if (value === 'generated') return 'generated';
   if (value === 'edited') return 'edited';
   return 'not_started';
+}
+
+function normalizeTributeMode(value?: string | null): TributeDisplayMode {
+  if (value === 'candle' || value === 'flower' || value === 'none') return value;
+  return 'both';
 }
 
 export async function GET(request: NextRequest) {
@@ -97,7 +108,7 @@ export async function GET(request: NextRequest) {
           .in('id', collaborationIds)
           .limit(100);
 
-        const collaborationMemoryById = new Map(
+        const collaborationMemoryById = new Map<string, any>(
           (memoryResponse.data || []).map((row: any) => [row.id, row])
         );
 
@@ -170,7 +181,7 @@ export async function GET(request: NextRequest) {
                 .select('id, data, firstname, lastname')
                 .in('id', pendingInviteIds)
             : { data: [] as any[] };
-          const pendingMemoryById = new Map(
+          const pendingMemoryById = new Map<string, any>(
             (pendingMemoriesResponse.data || []).map((row: any) => [row.id, row])
           );
 
@@ -259,7 +270,7 @@ export async function GET(request: NextRequest) {
       const identite = payload.identite || payload.defunt || {};
       const subjectFirstName = identite.prenom || payload.prenom || '';
       const subjectLastName = identite.nom || payload.nom || '';
-      const title = [subjectFirstName, subjectLastName].filter(Boolean).join(' ').trim() || 'Memorial';
+      const title = [subjectFirstName, subjectLastName].filter(Boolean).join(' ').trim() || 'Mémorial';
 
       const relatedMedia = mediaByMemory[row.id] || [];
       const relatedMessages = messagesByMemory[row.id] || [];
@@ -271,13 +282,18 @@ export async function GET(request: NextRequest) {
       const communType = payload?.communType
         ? String(payload.communType)
         : resolveCommunTypeFromContext(row.context_type || '');
+      const resolvedCommunType = communType as CommunType;
       const accessRole = normalizeCollaboratorRole(row.access_role || 'owner');
       const canAdminister = hasAdministrativeMemoryRole(accessRole);
+      const audioTitle = payload?.medias?.audioTitle || payload?.gouts?.musique || null;
+      const visualTheme = resolveVisualTheme(payload?.visualTheme || payload?.template, resolvedCommunType);
+      const compositionModel = resolveCompositionModel(payload?.compositionModel || payload?.layout, resolvedCommunType);
+      const writingStyle = resolveWritingStyle(payload?.writingStyle || payload?.style, resolvedCommunType);
 
       return {
         id: row.id,
         title,
-        communType: communType as CommunType,
+        communType: resolvedCommunType,
         subjectFirstName,
         subjectLastName,
         profilePhotoUrl: payload?.identite?.photoUrl || null,
@@ -303,6 +319,13 @@ export async function GET(request: NextRequest) {
           : Array.isArray(row.memory_image_energies)
           ? row.memory_image_energies
           : [],
+        compositionModel,
+        visualTheme,
+        writingStyle,
+        textTypography: resolveTypographyPreference(payload?.textTypography),
+        tributeMode: normalizeTributeMode(payload?.tributeMode),
+        audioTitle,
+        audioEnabled: Boolean(audioTitle),
       };
     });
 
@@ -324,7 +347,7 @@ export async function GET(request: NextRequest) {
     const messages = messageRows.slice(0, 80).map((msg: any) => ({
       id: msg.id,
       memoryId: msg.memory_id,
-      memoryTitle: memoryTitleMap[msg.memory_id] || 'Memorial',
+      memoryTitle: memoryTitleMap[msg.memory_id] || 'Mémorial',
       authorName: msg.author_name || 'Proche',
       content: msg.content || '',
       createdAt: msg.created_at,
@@ -336,7 +359,7 @@ export async function GET(request: NextRequest) {
     const candles = candleRows.slice(0, 80).map((candle: any) => ({
       id: candle.id,
       memoryId: candle.memory_id,
-      memoryTitle: memoryTitleMap[candle.memory_id] || 'Memorial',
+      memoryTitle: memoryTitleMap[candle.memory_id] || 'Mémorial',
       authorName: candle.author_name || 'Visiteur',
       createdAt: candle.created_at,
     }));

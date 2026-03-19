@@ -2,7 +2,7 @@ import { TemplateConfig } from '@/lib/templates';
 
 export type TextTypography = 'serif' | 'sans' | 'calligraphy';
 export type ProfilePhotoShape = 'round' | 'square';
-export type TributeDisplayMode = 'both' | 'candle' | 'flower';
+export type TributeDisplayMode = 'both' | 'candle' | 'flower' | 'none';
 export type ThematicSection = { title: string; content: string };
 
 export function safeParse<T>(raw: string | null): T | null {
@@ -17,11 +17,56 @@ export function safeParse<T>(raw: string | null): T | null {
 export function sanitizeGeneratedText(value: string | null | undefined): string {
   if (!value) return '';
   return value
+    .replace(/\r\n?/g, '\n')
     .replace(/\*\[.*?\]\*/g, '')
     .replace(/\*\*/g, '')
     .replace(/(^|\s)\*(?=\S)/g, '$1')
-    .replace(/\s{2,}/g, ' ')
+    .split('\n')
+    .map((line) => line.replace(/[ \t]{2,}/g, ' ').trim())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+function capitalizeToken(value: string): string {
+  const lower = value.toLocaleLowerCase('fr-FR');
+  if (!lower) return '';
+  return lower.charAt(0).toLocaleUpperCase('fr-FR') + lower.slice(1);
+}
+
+export function formatDisplayNamePart(value: string | null | undefined): string {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return '';
+
+  const smallWords = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'van', 'von', 'da', 'dos']);
+
+  return trimmed
+    .split(/\s+/)
+    .map((word, wordIndex) =>
+      word
+        .split(/([-'’])/)
+        .map((part, partIndex) => {
+          if (!part) return part;
+          if (/^[-'’]$/.test(part)) return part;
+
+          const normalized = part.toLocaleLowerCase('fr-FR');
+          const shouldKeepLowercase =
+            wordIndex > 0 && partIndex === 0 && smallWords.has(normalized);
+
+          return shouldKeepLowercase ? normalized : capitalizeToken(part);
+        })
+        .join('')
+    )
+    .join(' ');
+}
+
+export function formatIdentityForDisplay(payload: any) {
+  const identity = resolveIdentity(payload);
+  return {
+    ...identity,
+    prenom: formatDisplayNamePart(identity?.prenom),
+    nom: formatDisplayNamePart(identity?.nom),
+  };
 }
 
 export function ensureAbsoluteUrl(url: string): string {
@@ -86,14 +131,14 @@ export function buildThematicSections(payload: any): ThematicSection[] {
   const gouts = source?.gouts || payload?.gouts || {};
 
   const sections: ThematicSection[] = [
-    { title: 'Sa carriere', content: asList(talents?.carriere) },
+    { title: 'Sa carrière', content: asList(talents?.carriere) },
     { title: 'Ses sports', content: asList(talents?.sport) },
-    { title: 'Sa blague preferee', content: asList(talents?.blagues) },
+    { title: 'Sa blague préférée', content: asList(talents?.blagues) },
     { title: 'Ses voyages', content: asList(liens?.voyages) },
     { title: 'Ses lieux de vie', content: asList(liens?.lieuxDeVie) },
     { title: 'Les personnes qui comptent', content: asList(liens?.personnesQuiComptent || liens?.amis) },
     { title: 'Anecdotes marquantes', content: asList(liens?.anecdotes) },
-    { title: 'Ses gouts', content: asList(gouts?.plat || gouts?.phrase) },
+    { title: 'Ses goûts', content: asList(gouts?.plat || gouts?.phrase) },
   ];
 
   return sections.filter((section) => section.content);

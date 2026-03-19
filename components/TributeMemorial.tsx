@@ -20,7 +20,7 @@ interface TributeMemorialProps {
     textColor: string;
     bgColor: string;
     type?: 'funeraire' | 'vivant' | 'objet';
-    funeraireMode?: 'both' | 'candle' | 'flower';
+    funeraireMode?: 'both' | 'candle' | 'flower' | 'none';
     labels?: TributeLabels;
 }
 

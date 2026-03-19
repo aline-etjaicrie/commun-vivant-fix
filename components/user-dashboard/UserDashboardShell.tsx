@@ -6,11 +6,11 @@ import { Clock3, Home, ImageIcon, MessageCircle, ScrollText, Settings } from 'lu
 
 const navItems = [
   { href: '/espace/accueil', label: 'Accueil', icon: Home },
-  { href: '/espace/memoriaux', label: 'Mes memoriaux', icon: ScrollText },
-  { href: '/espace/medias', label: 'Medias', icon: ImageIcon },
+  { href: '/espace/memoriaux', label: 'Mes mémoriaux', icon: ScrollText },
+  { href: '/espace/medias', label: 'Médias', icon: ImageIcon },
   { href: '/espace/messages-bougies', label: 'Messages', icon: MessageCircle },
   { href: '/espace/options-duree', label: 'Options', icon: Clock3 },
-  { href: '/espace/parametres', label: 'Parametres', icon: Settings },
+  { href: '/espace/parametres', label: 'Paramètres', icon: Settings },
 ];
 
 export default function UserDashboardShell({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
@@ -41,7 +41,7 @@ export default function UserDashboardShell({ title, subtitle, children }: { titl
 
         <main className="flex-1 p-4 pb-24 md:p-8 md:pb-8">
           <header className="mb-5 rounded-2xl border border-[#E5E7EB] bg-white p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#6B7280]">Dashboard usager</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-[#6B7280]">Espace personnel</p>
             <h1 className="mt-1 text-2xl font-semibold md:text-3xl">{title}</h1>
             {subtitle ? <p className="mt-1 text-sm text-[#6B7280]">{subtitle}</p> : null}
           </header>

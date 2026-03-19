@@ -23,20 +23,26 @@ export default function GoutsBlock({ gouts, audioUrl, audioTitle, template, isLi
 
   return (
     <div
-      className="rounded-xl shadow p-6"
+      className="rounded-[30px] border p-6 shadow-[0_24px_70px_rgba(15,23,38,0.08)] md:p-7"
       style={{
-        backgroundColor: isLightBg ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
+        backgroundColor: isLightBg ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.05)',
+        border: `1px solid ${template.colors.accent}20`,
       }}
     >
-      <h3
-        className="text-2xl font-bold mb-6"
-        style={{ color: template.colors.text }}
-      >
-        Moments et goûts
-      </h3>
+      <div className="mb-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: template.colors.accent }}>
+          Ambiance sonore
+        </p>
+        <h3
+          className="mt-2 text-[1.85rem] font-serif leading-tight"
+          style={{ color: template.colors.text }}
+        >
+          Musique et repères
+        </h3>
+      </div>
       <div className="space-y-4">
         {musiqueTitle && (
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 rounded-[22px] border p-4" style={{ borderColor: `${template.colors.accent}20` }}>
             <Music
               className="w-5 h-5 flex-shrink-0 mt-1"
               style={{ color: template.colors.accent }}
@@ -69,7 +75,7 @@ export default function GoutsBlock({ gouts, audioUrl, audioTitle, template, isLi
         )}
 
         {lieu && (
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 rounded-[22px] border p-4" style={{ borderColor: `${template.colors.accent}20` }}>
             <MapPin
               className="w-5 h-5 flex-shrink-0 mt-1"
               style={{ color: template.colors.accent }}
@@ -90,11 +96,12 @@ export default function GoutsBlock({ gouts, audioUrl, audioTitle, template, isLi
 
         {phrase && (
           <blockquote
-            className="border-l-4 pl-4 italic"
+            className="rounded-[24px] border-l-4 p-5 text-[1rem] italic leading-8 md:text-[1.06rem]"
             style={{
               borderColor: template.colors.accent,
               color: template.colors.text,
-              opacity: 0.8
+              opacity: 0.8,
+              backgroundColor: isLightBg ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)',
             }}
           >
             {phrase}

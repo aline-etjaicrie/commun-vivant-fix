@@ -14,13 +14,13 @@ export default function AlmaChatBubble() {
         <button
           onClick={() => setIsOpen(true)}
           className="fixed bottom-6 right-6 w-16 h-16 bg-memoir-gold rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center z-50 group"
-          aria-label="Ouvrir ALMA"
+          aria-label="Se faire aider par ALMA"
         >
           <Sparkles className="w-7 h-7 text-white" />
           
           {/* Tooltip */}
           <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-memoir-blue text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Discuter avec ALMA
+            Se faire aider par ALMA
           </div>
         </button>
       )}

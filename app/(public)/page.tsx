@@ -1,10 +1,7 @@
 
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { Sparkles, Box, Flame, ArrowRight, CheckCircle } from 'lucide-react';
-import Title from '@/components/Title';
-import { Search, Mail, ChevronDown, ChevronUp } from 'lucide-react';
 import { buildJourneyPath, CREATION_JOURNEYS } from '@/lib/journeys';
 
 function getJourneyIcon(journeyId: string) {
@@ -18,9 +15,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans">
 
-      {/* SECTION 1: HERO - Version optimisée pour la lisibilité */}
+      {/* SECTION 1: HERO */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-        {/* Background avec image et overlay */}
         <div className="absolute inset-0 z-0">
           <Image
             src="/hero-2.jpg"
@@ -30,15 +26,11 @@ export default function HomePage() {
             priority
             sizes="100vw"
           />
-          {/* Overlay sombre pour améliorer le contraste */}
           <div className="absolute inset-0 bg-black/40" />
-          {/* Effet de lumière subtile pour adoucir */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
         </div>
 
-        {/* Contenu textuel avec fond semi-transparent pour une meilleure lisibilité */}
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center space-y-8 mt-16">
-          {/* Fond semi-transparent pour le texte */}
           <div className="backdrop-blur-sm bg-white/10 rounded-3xl p-8 border border-white/20 shadow-lg inline-block">
             <h1 className="text-4xl md:text-6xl font-serif font-bold text-white leading-tight mb-6">
               Créer un espace de mémoire<span className="text-memoir-neon">.</span><br />
@@ -47,25 +39,28 @@ export default function HomePage() {
             </h1>
 
             <p className="text-lg md:text-xl font-serif italic text-white/90 max-w-3xl mx-auto mb-10">
-              Un lieu <span className="font-medium text-memoir-gold">numérique</span> pour transmettre, honorer, célébrer<span className="text-memoir-neon">.</span><br />
-              Un accès <span className="font-medium text-memoir-gold">physique</span> partagé<span className="text-memoir-neon">.</span>
+              Un espace simple pour <span className="font-medium text-memoir-gold">honorer</span>, <span className="font-medium text-memoir-gold">fêter</span> ou <span className="font-medium text-memoir-gold">transmettre</span>.<br />
+              En quelques minutes, vous obtenez une première version à relire et à enrichir à votre rythme<span className="text-memoir-neon">.</span>
             </p>
 
-            {/* Boutons avec hiérarchie claire */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/exemple"
+                href="#portes"
                 className="inline-flex items-center bg-pink-600 text-white px-8 py-4 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all transform gap-2"
               >
-                Voir un exemple <ArrowRight className="w-5 h-5" />
+                Commencer une mémoire <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
-                href="#portes"
+                href="/exemple"
                 className="inline-flex items-center bg-white/20 text-white px-8 py-4 rounded-full font-bold hover:bg-white/30 transition-all gap-2 border border-white/30"
               >
-                Découvrir comment <ChevronDown className="w-5 h-5" />
+                Voir un exemple
               </Link>
             </div>
+
+            <p className="mt-5 text-sm uppercase tracking-[0.25em] text-white/75">
+              Première version en 5 à 10 min
+            </p>
           </div>
         </div>
       </section>
@@ -182,6 +177,9 @@ export default function HomePage() {
                     >
                       {porte.ctaLabel}
                     </Link>
+                    <p className="mt-3 text-xs uppercase tracking-[0.22em] text-memoir-blue/40">
+                      Première version en 5 à 10 min
+                    </p>
                   </div>
                 </div>
               );
@@ -292,7 +290,7 @@ export default function HomePage() {
 
 
 
-      {/* SECTION 5: DU NUMÉRIQUE AU PHYSIQUE */}
+      {/* SECTION 5: SUPPORTS PHYSIQUES */}
       <section className="py-24 px-6 bg-[#FDFBF7] border-t border-memoir-gold/10">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
@@ -313,10 +311,10 @@ export default function HomePage() {
           <div className="lg:order-1 space-y-10">
             <div>
               <h2 className="text-3xl md:text-5xl font-serif italic text-memoir-blue mb-6 leading-tight">
-                Du numérique <br /> <span className="text-memoir-gold">au physique</span><span className="text-memoir-neon">.</span>
+                Ancrer la mémoire <br /> <span className="text-memoir-gold">dans un support physique</span><span className="text-memoir-neon">.</span>
               </h2>
               <p className="text-lg text-memoir-blue/70 font-light leading-relaxed">
-                Parce que le souvenir a besoin d'ancrage, nous proposons des supports physiques élégants connectés à votre espace mémoire via une puce NFC ou un QR code discret.
+                Une fois la mémoire créée, vous pouvez l’ancrer dans un objet ou un support discret, relié à la page par une puce NFC ou un QR code.
               </p>
             </div>
 
@@ -336,7 +334,7 @@ export default function HomePage() {
                   <span className="text-2xl">🏛️</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-memoir-blue mb-1">Medaillon QR pour sépulture</h3>
+                  <h3 className="font-bold text-memoir-blue mb-1">Médaillon QR pour sépulture</h3>
                   <p className="text-sm text-memoir-blue/60">Un médaillon en céramique ou métal, inaltérable, pour accéder au mémorial depuis le lieu de recueillement.</p>
                 </div>
               </div>
