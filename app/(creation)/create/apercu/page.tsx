@@ -126,7 +126,7 @@ function ApercuContent() {
           setTeaserText(fallback);
           localStorage.setItem('alma_teaser_text', fallback);
         } else {
-          setError('Impossible de générer l'aperçu. Vérifiez votre connexion et réessayez.');
+          setError("Impossible de générer l'aperçu. Vérifiez votre connexion et réessayez.");
         }
       })
       .finally(() => setIsLoading(false));
@@ -225,6 +225,7 @@ function ApercuContent() {
         {/* Régénérer */}
         <div className="-mt-2 mb-8 flex justify-center">
           <button
+            type="button"
             onClick={handleRegenerate}
             disabled={isRegenerating || regenerationCount >= MAX_REGENERATIONS}
             className="flex items-center gap-2 text-sm text-[#5E6B78] hover:text-[#C9A24D] transition-colors disabled:cursor-not-allowed disabled:opacity-40"
@@ -265,6 +266,7 @@ function ApercuContent() {
         {/* CTAs */}
         <div className="flex flex-col gap-4 sm:flex-row">
           <button
+            type="button"
             onClick={handleModify}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#0F2A44] px-6 py-4 font-medium text-[#0F2A44] transition hover:bg-[#0F2A44] hover:text-white"
           >
@@ -273,6 +275,7 @@ function ApercuContent() {
           </button>
 
           <button
+            type="button"
             onClick={handleContinue}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#C9A24D] px-6 py-4 font-medium text-white shadow-lg transition hover:bg-[#B8913C]"
           >
