@@ -22,7 +22,7 @@ import {
   resolveCommunType,
   getLegacyContextForCommunType,
 } from '@/lib/communTypes';
-import { STORAGE_KEYS } from '@/lib/creationFlowStorage';
+import { STORAGE_KEYS, clearPreviousCreationFlow } from '@/lib/creationFlowStorage';
 import { ensureDraftMemory } from '@/lib/client/draftMemory';
 
 function QuestionnaireContent() {
@@ -59,6 +59,16 @@ function QuestionnaireContent() {
     medias: [],
     liensWeb: [],
   });
+
+  // Nettoyer les données d'un ancien parcours si on démarre un nouveau (pas une reprise)
+  useEffect(() => {
+    const isResume = searchParams?.get('resume') === 'true';
+    const hasMemorialId = Boolean(searchParams?.get('memorialId'));
+    if (!isResume && !hasMemorialId) {
+      clearPreviousCreationFlow();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Vérifier si on vient d'Alma

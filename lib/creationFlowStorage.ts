@@ -58,3 +58,49 @@ export function getAnyAlmaConversationRaw(): string | null {
   }
   return null;
 }
+
+/**
+ * Efface toutes les données d'un ancien parcours.
+ * À appeler au début de chaque nouveau questionnaire, avant toute lecture du localStorage.
+ */
+export function clearPreviousCreationFlow(): void {
+  if (typeof window === 'undefined') return;
+
+  const KEYS_TO_CLEAR: string[] = [
+    STORAGE_KEYS.generatedMemorialText,
+    STORAGE_KEYS.questionnaireData,
+    STORAGE_KEYS.questionnaireDataDev,
+    STORAGE_KEYS.vivantQuestionnaireData,
+    STORAGE_KEYS.transmissionQuestionnaireData,
+    STORAGE_KEYS.objetQuestionnaireData,
+    STORAGE_KEYS.solennQuestionnaireData,
+    STORAGE_KEYS.memorialFinalization,
+    STORAGE_KEYS.memorialFinalizationDev,
+    STORAGE_KEYS.mediaData,
+    STORAGE_KEYS.currentMemorialId,
+    STORAGE_KEYS.creationFlow,
+    STORAGE_KEYS.context,
+    'memorialPreviewData',
+    'alma_context',
+    'alma_commun_type',
+    'alma_genre',
+    'alma_preferred_style',
+    'alma_subject_name',
+    'alma_teaser_text',
+    'alma_collected_info',
+  ];
+
+  KEYS_TO_CLEAR.forEach((key) => localStorage.removeItem(key));
+
+  Object.keys(localStorage)
+    .filter(
+      (key) =>
+        key.startsWith('questionnaire-memoire-') ||
+        key.startsWith('questionnaire-dev-') ||
+        key.startsWith('almaConversation_') ||
+        key.startsWith('draftAccessToken:') ||
+        key.startsWith('flowers-') ||
+        key.startsWith('user-action-')
+    )
+    .forEach((key) => localStorage.removeItem(key));
+}
