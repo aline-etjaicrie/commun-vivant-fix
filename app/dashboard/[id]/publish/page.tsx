@@ -18,7 +18,7 @@ function PublishPageContent() {
     const searchParams = useSearchParams();
     const id = params?.id as string;
 
-    const urlLevel = searchParams?.get('accessLevel');
+    const urlLevel = searchParams?.get('accessLevel') ?? null;
     const hasUrlParam = isValidAccessLevel(urlLevel);
 
     // Si le param URL est présent → valeur optimiste immédiate
