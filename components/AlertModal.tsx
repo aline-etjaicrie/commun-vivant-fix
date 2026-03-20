@@ -16,9 +16,10 @@ export default function AlertModal({ isOpen, onClose, type }: AlertModalProps) {
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
         <button
           onClick={onClose}
+          aria-label="Fermer"
           className="absolute top-4 right-4 text-memoir-dark/40 hover:text-memoir-dark transition-colors"
         >
-          <X className="w-6 h-6" />
+          <X className="w-6 h-6" aria-hidden="true" />
         </button>
 
         <h3 className="text-2xl font-serif font-bold text-memoir-dark mb-4">

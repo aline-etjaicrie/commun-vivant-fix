@@ -243,7 +243,7 @@ export default function PersonalizePage() {
                                                     <button
                                                         onClick={() => setActiveIconPicker(blockId)}
                                                         className="p-1.5 bg-gray-50 hover:bg-[#C9A24D]/10 rounded border border-gray-100 text-[#C9A24D] transition-colors"
-                                                        title="Changer l'icône"
+                                                        aria-label="Changer l'icône"
                                                     >
                                                         <BlockIcon id={blockId} />
                                                     </button>
@@ -254,16 +254,18 @@ export default function PersonalizePage() {
                                                 <button
                                                     onClick={() => moveBlock(index, 'up')}
                                                     disabled={index === 0}
+                                                    aria-label="Monter"
                                                     className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"
                                                 >
-                                                    <ChevronUp className="w-3 h-3" />
+                                                    <ChevronUp className="w-3 h-3" aria-hidden="true" />
                                                 </button>
                                                 <button
                                                     onClick={() => moveBlock(index, 'down')}
                                                     disabled={index === blocks.length - 1}
+                                                    aria-label="Descendre"
                                                     className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"
                                                 >
-                                                    <ChevronDown className="w-3 h-3" />
+                                                    <ChevronDown className="w-3 h-3" aria-hidden="true" />
                                                 </button>
                                             </div>
                                         </div>
@@ -313,33 +315,36 @@ export default function PersonalizePage() {
                                     </label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <span className="text-[10px] text-gray-500 block mb-1">Principal</span>
+                                            <label htmlFor="color-primary" className="text-[10px] text-gray-500 block mb-1">Principal</label>
                                             <div className="flex items-center gap-2">
                                                 <input
+                                                    id="color-primary"
                                                     type="color"
                                                     value={palette.primary}
                                                     onChange={(e) => handleColorChange('primary', e.target.value)}
                                                     className="w-8 h-8 rounded cursor-pointer border-0 p-0"
                                                 />
-                                                <span className="text-[10px] font-mono opacity-50">{palette.primary}</span>
+                                                <span className="text-[10px] font-mono opacity-50" aria-hidden="true">{palette.primary}</span>
                                             </div>
                                         </div>
                                         <div>
-                                            <span className="text-[10px] text-gray-500 block mb-1">Secondaire</span>
+                                            <label htmlFor="color-secondary" className="text-[10px] text-gray-500 block mb-1">Secondaire</label>
                                             <div className="flex items-center gap-2">
                                                 <input
+                                                    id="color-secondary"
                                                     type="color"
                                                     value={palette.secondary}
                                                     onChange={(e) => handleColorChange('secondary', e.target.value)}
                                                     className="w-8 h-8 rounded cursor-pointer border-0 p-0"
                                                 />
-                                                <span className="text-[10px] font-mono opacity-50">{palette.secondary}</span>
+                                                <span className="text-[10px] font-mono opacity-50" aria-hidden="true">{palette.secondary}</span>
                                             </div>
                                         </div>
                                         <div className="col-span-2 border-t border-gray-200 pt-2 mt-1">
-                                            <span className="text-[10px] text-gray-500 block mb-1">Arrière-plan de la page</span>
+                                            <label htmlFor="color-bg" className="text-[10px] text-gray-500 block mb-1">Arrière-plan de la page</label>
                                             <div className="flex items-center gap-2">
                                                 <input
+                                                    id="color-bg"
                                                     type="color"
                                                     value={palette.bg}
                                                     onChange={(e) => handleColorChange('bg', e.target.value)}
@@ -396,8 +401,9 @@ export default function PersonalizePage() {
 
                             {/* Photo Filter */}
                             <div>
-                                <label className="text-xs text-gray-500 mb-2 block">Filtre Photo</label>
+                                <label htmlFor="photo-filter" className="text-xs text-gray-500 mb-2 block">Filtre Photo</label>
                                 <select
+                                    id="photo-filter"
                                     value={selectedFilter}
                                     onChange={(e) => setSelectedFilter(e.target.value)}
                                     className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#C9A24D]"
