@@ -180,7 +180,33 @@ export default function MemorialPage() {
         <div className="mx-auto max-w-2xl rounded-2xl border border-[#E5E7EB] bg-white p-8 text-center">
           <h1 className="text-2xl font-semibold text-[#1F2B35]">Espace temporairement indisponible</h1>
           <p className="mt-3 text-sm text-[#5E6B78]">
-            Ce memorial n'est pas accessible pour le moment. Merci de contacter l'agence ou la famille reference.
+            Ce mémorial n'est pas accessible pour le moment. Merci de contacter l'agence ou la famille référencée.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (memorial?.access_level === 'restreint') {
+    return (
+      <main className="min-h-screen bg-[#F7F7F5] px-6 py-24">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-[#E5E7EB] bg-white p-8 text-center">
+          <h1 className="text-2xl font-semibold text-[#1F2B35]">Accès restreint</h1>
+          <p className="mt-3 text-sm text-[#5E6B78]">
+            Ce mémorial n'est pas accessible publiquement pour le moment. Son accès sera configuré par la personne responsable.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (memorial?.access_level === 'a_definir_plus_tard') {
+    return (
+      <main className="min-h-screen bg-[#F7F7F5] px-6 py-24">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-[#E5E7EB] bg-white p-8 text-center">
+          <h1 className="text-2xl font-semibold text-[#1F2B35]">Accès en attente</h1>
+          <p className="mt-3 text-sm text-[#5E6B78]">
+            Ce mémorial a bien été préparé, mais son mode d'accès n'a pas encore été confirmé.
           </p>
         </div>
       </main>

@@ -35,6 +35,24 @@ export default async function PublicB2BPage(props: {
       />
     );
   }
+  if (resolved.status === 'access_restricted') {
+    return (
+      <PublicUnavailablePage
+        title="Accès restreint"
+        message="Ce mémorial n'est pas accessible publiquement pour le moment. Son accès sera configuré par la personne responsable."
+        agencyName={agencySlug}
+      />
+    );
+  }
+  if (resolved.status === 'access_pending') {
+    return (
+      <PublicUnavailablePage
+        title="Accès en attente"
+        message="Ce mémorial a bien été préparé, mais son mode d'accès n'a pas encore été confirmé."
+        agencyName={agencySlug}
+      />
+    );
+  }
 
   const h = await headers();
   await trackMemoryVisit({

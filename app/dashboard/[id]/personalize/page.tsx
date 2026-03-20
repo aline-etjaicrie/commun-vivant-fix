@@ -151,10 +151,33 @@ export default function PersonalizePage() {
 
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const handleConfirmPublish = (accessLevel: 'open' | 'restricted' | 'later') => {
+    // Mapping des valeurs du modal vers les valeurs métier persistées
+    const ACCESS_LEVEL_MAP: Record<'open' | 'restricted' | 'later', string> = {
+        open: 'ouvert',
+        restricted: 'restreint',
+        later: 'a_definir_plus_tard',
+    };
+
+    const handleConfirmPublish = async (accessLevel: 'open' | 'restricted' | 'later') => {
         setIsProcessing(true);
-        // TODO: persister accessLevel et les préférences de personnalisation
-        router.push(`/dashboard/${id}/publish`);
+        try {
+            const mappedAccessLevel = ACCESS_LEVEL_MAP[accessLevel];
+            const res = await fetch(`/api/user-dashboard/memorials/${id}/state`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    publicationStatus: 'published',
+                    accessLevel: mappedAccessLevel,
+                }),
+            });
+            if (!res.ok) {
+                console.error('Erreur lors de la publication :', await res.text());
+            }
+        } catch (err) {
+            console.error('Erreur réseau lors de la publication :', err);
+        } finally {
+            router.push(`/dashboard/${id}/publish?accessLevel=${ACCESS_LEVEL_MAP[accessLevel]}`);
+        }
     };
 
     return (

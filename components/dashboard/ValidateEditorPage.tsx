@@ -437,7 +437,7 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
 
   const handleRegenerate = () => {
     setIsRegenerating(true);
-    router.push(`/dashboard/generate?memoryId=${encodeURIComponent(memoryId)}`);
+    router.push(`/dashboard/${encodeURIComponent(memoryId)}/generate`);
   };
 
   const updateIdentityField = (field: 'prenom' | 'nom', value: string) => {

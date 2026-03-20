@@ -13,6 +13,7 @@ export const runtime = 'nodejs';
 
 
 const ALLOWED_PUBLICATION_STATUS = new Set(['draft', 'published', 'archived']);
+const ALLOWED_ACCESS_LEVEL = new Set(['ouvert', 'restreint', 'a_definir_plus_tard']);
 
 export async function PATCH(
   request: NextRequest,
@@ -26,9 +27,14 @@ export async function PATCH(
     const memoryId = String(id || '');
     const body = await request.json();
     const publicationStatus = String(body?.publicationStatus || '');
+    const accessLevel = body?.accessLevel ? String(body.accessLevel) : null;
 
     if (!memoryId || !ALLOWED_PUBLICATION_STATUS.has(publicationStatus)) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    }
+
+    if (accessLevel !== null && !ALLOWED_ACCESS_LEVEL.has(accessLevel)) {
+      return NextResponse.json({ error: 'Invalid accessLevel' }, { status: 400 });
     }
 
     const admin = getSupabaseAdmin();
@@ -47,6 +53,10 @@ export async function PATCH(
       publication_status: publicationStatus,
       updated_at: new Date().toISOString(),
     };
+
+    if (accessLevel !== null) {
+      updatePayload.access_level = accessLevel;
+    }
 
     if (publicationStatus === 'published') {
       const resolved = await resolveMemoryPublicUrl(admin, memory, memory.agency_id ? 'b2b' : 'b2c');
@@ -80,6 +90,7 @@ export async function PATCH(
       targetId: memoryId,
       metadata: {
         publicationStatus,
+        accessLevel: accessLevel ?? undefined,
         publicUrl: responsePublicUrl,
       },
     });
@@ -87,6 +98,7 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       publicUrl: responsePublicUrl,
+      accessLevel: updatePayload.access_level ?? memory.access_level ?? 'a_definir_plus_tard',
     });
   } catch (error) {
     console.error('USER DASH memorial state server error:', error);

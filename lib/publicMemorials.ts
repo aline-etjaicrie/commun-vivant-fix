@@ -5,6 +5,8 @@ export type PublicResolveResult =
   | { status: 'not_found' }
   | { status: 'unpublished'; reason: 'draft' | 'archived' }
   | { status: 'suspended' }
+  | { status: 'access_restricted' }
+  | { status: 'access_pending' }
   | {
       status: 'ok';
       memory: any;
@@ -18,7 +20,7 @@ async function getMemoryBySlugOrId(memorySlug: string): Promise<any | null> {
 
   const bySlug = await admin
     .from('memories')
-    .select('id, slug, data, template_choice, publication_status, access_status, agency_id, user_id, owner_user_id, created_at')
+    .select('id, slug, data, template_choice, publication_status, access_status, access_level, agency_id, user_id, owner_user_id, created_at')
     .eq('slug', memorySlug)
     .maybeSingle();
 
@@ -29,7 +31,7 @@ async function getMemoryBySlugOrId(memorySlug: string): Promise<any | null> {
   // Backward compatibility if slug is not populated yet.
   const byId = await admin
     .from('memories')
-    .select('id, data, template_choice, publication_status, access_status, agency_id, user_id, owner_user_id, created_at')
+    .select('id, data, template_choice, publication_status, access_status, access_level, agency_id, user_id, owner_user_id, created_at')
     .eq('id', memorySlug)
     .maybeSingle();
 
@@ -57,6 +59,15 @@ export async function resolvePublicMemorial(params: {
 
   if (memory.access_status === 'suspended') {
     return { status: 'suspended' };
+  }
+
+  // Vérification du niveau d'accès choisi par l'utilisateur
+  const accessLevel = memory.access_level ?? 'ouvert';
+  if (accessLevel === 'restreint') {
+    return { status: 'access_restricted' };
+  }
+  if (accessLevel === 'a_definir_plus_tard') {
+    return { status: 'access_pending' };
   }
 
   const admin = getSupabaseAdmin();
