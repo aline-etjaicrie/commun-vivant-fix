@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 type AccessLevel = 'ouvert' | 'restreint' | 'a_definir_plus_tard';
+type FetchState = 'loading' | 'error' | 'done';
 
 function isValidAccessLevel(v: string | null): v is AccessLevel {
     return v === 'ouvert' || v === 'restreint' || v === 'a_definir_plus_tard';
@@ -17,28 +18,60 @@ function PublishPageContent() {
     const searchParams = useSearchParams();
     const id = params?.id as string;
 
-    // Param URL comme état optimiste immédiat (juste après redirection depuis personalize)
     const urlLevel = searchParams?.get('accessLevel');
-    const optimisticLevel: AccessLevel = isValidAccessLevel(urlLevel) ? urlLevel : 'ouvert';
+    const hasUrlParam = isValidAccessLevel(urlLevel);
 
-    const [accessLevel, setAccessLevel] = useState<AccessLevel>(optimisticLevel);
-    const [loadedFromDB, setLoadedFromDB] = useState(false);
+    // Si le param URL est présent → valeur optimiste immédiate
+    // Si absent → null (on attend la DB, on n'invente rien)
+    const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(
+        hasUrlParam ? urlLevel : null
+    );
+    const [fetchState, setFetchState] = useState<FetchState>('loading');
 
     useEffect(() => {
         if (!id) return;
         fetch(`/api/user-dashboard/memorials/${id}/state`)
-            .then(r => r.ok ? r.json() : null)
+            .then(r => r.ok ? r.json() : Promise.reject())
             .then(data => {
                 if (data && isValidAccessLevel(data.accessLevel)) {
                     setAccessLevel(data.accessLevel);
                 }
-                setLoadedFromDB(true);
+                setFetchState('done');
             })
             .catch(() => {
-                // En cas d'erreur réseau, on conserve la valeur optimiste de l'URL
-                setLoadedFromDB(true);
+                // Avec param URL → on conserve comme fallback
+                // Sans param URL → on signale l'erreur, on n'affiche pas 'ouvert' par défaut
+                setFetchState('error');
             });
     }, [id]);
+
+    // Pas encore de valeur sûre à afficher
+    if (accessLevel === null) {
+        if (fetchState === 'error') {
+            return (
+                <div className="min-h-screen bg-[#F5F4F2] flex items-center justify-center p-6">
+                    <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-[#C9A24D]/20">
+                        <p className="text-gray-500 text-sm mb-4">
+                            Impossible de vérifier le statut d'accès de ce mémorial.
+                        </p>
+                        <Link href={`/dashboard/${id}`} className="text-sm text-[#0F2A44] underline">
+                            Retour au tableau de bord
+                        </Link>
+                    </div>
+                </div>
+            );
+        }
+        // loading sans param URL → état neutre, pas de faux 'ouvert'
+        return (
+            <div className="min-h-screen bg-[#F5F4F2] flex items-center justify-center p-6">
+                <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-[#C9A24D]/20">
+                    <p className="text-gray-400 text-sm animate-pulse">
+                        Vérification du statut d'accès…
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     if (accessLevel === 'restreint') {
         return (
@@ -110,7 +143,7 @@ function PublishPageContent() {
         );
     }
 
-    // Accès ouvert
+    // Accès ouvert — affiché seulement si la DB (ou le param URL) le confirme explicitement
     return (
         <div className="min-h-screen bg-[#F5F4F2] flex items-center justify-center p-6">
             <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-[#C9A24D]/20">
