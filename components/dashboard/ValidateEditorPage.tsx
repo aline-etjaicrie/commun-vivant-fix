@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ChevronLeft,
+  ExternalLink,
   Eye,
   FileText,
-  GripVertical,
   Heart,
   ImageIcon,
   Link2,
@@ -21,8 +21,9 @@ import {
   Trash2,
   Type,
 } from 'lucide-react';
-import BlockOrderEditor from '@/components/BlockOrderEditor';
+import SortableBlockEditor from '@/components/SortableBlockEditor';
 import { type BlockType } from '@/lib/layouts';
+import { FINAL_TEMPLATES, getFinalTemplate } from '@/lib/finalTemplates';
 import { resolveCommunTypeFromPayload } from '@/lib/almaProfiles';
 import {
   type CommunType,
@@ -156,6 +157,7 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
   const [isOpeningPreview, setIsOpeningPreview] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [blockOrder, setBlockOrder] = useState<BlockType[]>([]);
+  const [lockedBlocks, setLockedBlocks] = useState<BlockType[]>(['profile', 'text']);
   const [colorPalette, setColorPalette] = useState<string>('navy-gold');
   const [customColors, setCustomColors] = useState({ primary: '#0F2A44', secondary: '#C9A24D', bg: '#F5F4F2' });
   const [photoFilter, setPhotoFilter] = useState<string>('none');
@@ -244,9 +246,17 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
       );
       setFamily(previewData?.family || mergedQuestionnaire?.family || {});
 
+      const resolvedCompositionModel = resolveCompositionModel(
+        previewData?.compositionModel || previewData?.layout,
+        detectedCommunType
+      );
+      const finalTemplate = getFinalTemplate(resolvedCompositionModel);
       const preset = getMemorialPreset(detectedCommunType);
-      const initialBlockOrder = sanitizeBlockOrder(previewData?.blockOrder || preset.blockOrder);
+      const initialBlockOrder = sanitizeBlockOrder(
+        previewData?.blockOrder || finalTemplate.defaultBlockOrder || preset.blockOrder
+      );
       setBlockOrder(initialBlockOrder);
+      setLockedBlocks(finalTemplate.lockedBlocks);
 
       const savedFilter = previewData?.photoFilter || media?.photoFilter || 'none';
       setPhotoFilter(savedFilter);
@@ -401,6 +411,7 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
       style: writingStyle,
       layout: getLegacyLayoutIdForCompositionModel(compositionModel),
       blockOrder: blockOrder.length > 0 ? blockOrder : sanitizeBlockOrder(preset.blockOrder),
+      lockedBlocks,
       photoFilter,
       colorPalette,
       colors: customColors,
@@ -419,6 +430,7 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
     compositionModel,
     customColors,
     hasFamilyData,
+    lockedBlocks,
     mediaData,
     normalizedFamily,
     photoFilter,
@@ -654,16 +666,24 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
             </div>
 
             <div className="mt-8 grid gap-4 lg:grid-cols-3">
-              {COMPOSITION_MODELS.map((model) => {
-                const isSelected = compositionModel === model.id;
-                const isRecommended = recommendedCompositionModel === model.id;
+              {FINAL_TEMPLATES.map((template) => {
+                const isSelected = compositionModel === template.id;
+                const isRecommended = recommendedCompositionModel === template.id;
+                const themeGradients: Record<string, string> = {
+                  'memorial-soft': 'linear-gradient(145deg, #FFF9F1 0%, #EADBC8 62%, #C9A46A 100%)',
+                  'celebration-vivid': 'linear-gradient(145deg, #17233A 0%, #F04D74 62%, #F8D46B 100%)',
+                  'night-cinematic': 'linear-gradient(145deg, #0E1626 0%, #23314D 58%, #D4A96A 100%)',
+                };
 
                 return (
                   <button
-                    key={model.id}
+                    key={template.id}
                     type="button"
                     onClick={() => {
-                      setCompositionModel(model.id);
+                      setCompositionModel(template.id);
+                      setLockedBlocks(template.lockedBlocks);
+                      // Reset block order to template default when changing template
+                      setBlockOrder(sanitizeBlockOrder(template.defaultBlockOrder));
                       if (notice) setNotice('');
                     }}
                     className={`rounded-[30px] border p-5 text-left transition ${
@@ -673,56 +693,59 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                     }`}
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      {isRecommended ? (
+                      {isRecommended && (
                         <span className="inline-flex rounded-full bg-[#FBF1DF] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8C6635]">
                           Recommandé
                         </span>
-                      ) : null}
-                      {isSelected ? (
+                      )}
+                      {isSelected && (
                         <span className="inline-flex rounded-full bg-[#0F2A44] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
                           Sélectionné
                         </span>
-                      ) : null}
+                      )}
                     </div>
 
+                    {/* Thumbnail éditorial */}
                     <div
-                      className="mt-4 rounded-[24px] border p-4"
+                      className="mt-4 overflow-hidden rounded-[20px]"
                       style={{
-                        borderColor: isSelected ? '#D8BE9A' : '#E9DECF',
-                        background:
-                          model.id === 'memory-album'
-                            ? 'linear-gradient(145deg, #17233A 0%, #F04D74 62%, #F8D46B 100%)'
-                            : model.id === 'heritage-transmission'
-                              ? 'linear-gradient(145deg, #0E1626 0%, #23314D 58%, #D4A96A 100%)'
-                              : 'linear-gradient(145deg, #FFF9F1 0%, #EADBC8 62%, #C9A46A 100%)',
+                        background: themeGradients[template.defaultVisualTheme] ?? themeGradients['memorial-soft'],
                       }}
                     >
-                      <div className="flex h-28 gap-3">
-                        <div className="flex-[1.1] rounded-[18px] bg-white/80 p-3 shadow-sm">
-                          <div className="h-12 rounded-[14px] bg-black/10" />
-                          <div className="mt-3 h-2.5 w-4/5 rounded-full bg-black/15" />
-                          <div className="mt-2 h-2.5 w-2/3 rounded-full bg-black/10" />
+                      <div className="flex h-32 gap-2.5 p-3">
+                        <div className="flex-[1.1] overflow-hidden rounded-[14px] bg-white/85 p-2.5 shadow-sm">
+                          <div className="h-10 rounded-[10px] bg-black/10" />
+                          <div className="mt-2.5 h-2 w-4/5 rounded-full bg-black/15" />
+                          <div className="mt-1.5 h-2 w-2/3 rounded-full bg-black/10" />
+                          <div className="mt-1.5 h-2 w-1/2 rounded-full bg-black/8" />
                         </div>
-                        <div className="flex flex-1 flex-col gap-2">
-                          {model.previewSections.map((section) => (
-                            <div key={section} className="rounded-[14px] bg-white/72 px-3 py-2 shadow-sm">
-                              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#0F2A44]/75">
-                                {section}
-                              </div>
-                              <div className="mt-1 h-2 rounded-full bg-black/10" />
-                            </div>
-                          ))}
+                        <div className="flex flex-1 flex-col gap-1.5">
+                          <div className="flex-1 rounded-[12px] bg-white/75 px-2.5 py-2 shadow-sm">
+                            <div className="h-1.5 w-3/4 rounded-full bg-black/15" />
+                            <div className="mt-1 h-1.5 w-full rounded-full bg-black/8" />
+                            <div className="mt-1 h-1.5 w-2/3 rounded-full bg-black/8" />
+                          </div>
+                          <div className="flex-1 rounded-[12px] bg-white/65 px-2.5 py-2 shadow-sm">
+                            <div className="h-1.5 w-1/2 rounded-full bg-black/12" />
+                            <div className="mt-1 h-8 rounded-[8px] bg-black/10" />
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <p className="mt-5 text-xl font-semibold text-[#0F2A44]">{model.label}</p>
-                    <p className="mt-2 text-sm leading-6 text-[#5E6B78]">{model.description}</p>
-                    <p className="mt-4 text-xs uppercase tracking-[0.18em] text-[#7A5A2E]">
-                      {model.ratioLabel}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-[#7B7B74]">{model.signature}</p>
-                    <p className="mt-3 text-xs text-[#7B7B74]">{model.bestFor}</p>
+                    <p className="mt-4 text-xl font-semibold text-[#0F2A44]">{template.label}</p>
+                    <p className="mt-1.5 text-sm leading-6 text-[#5E6B78]">{template.tagline}</p>
+
+                    {/* Lien vers l'exemple de référence */}
+                    <Link
+                      href={`/exemple/${template.exampleSlug}`}
+                      target="_blank"
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-3 inline-flex items-center gap-1 text-xs text-[#A27C53] underline-offset-2 hover:underline"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Voir l'exemple : {template.exampleTitle}
+                    </Link>
                   </button>
                 );
               })}
@@ -1110,15 +1133,16 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
 
               {blockOrder.length > 0 && (
                 <div className="mt-8">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#0F2A44]">
-                    <GripVertical className="h-4 w-4 text-[#A27C53]" />
+                  <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-[#0F2A44]">
                     Organisation des blocs
                   </div>
                   <p className="mb-4 text-sm text-[#5E6B78]">
-                    Glissez-déposez ou utilisez les flèches pour changer l'ordre des sections dans la page finale.
+                    Glissez-déposez ou utilisez les flèches pour changer l'ordre des sections.
+                    Les blocs <span className="font-medium text-[#9E9585]">fixe</span> font partie de la structure du template et ne peuvent pas être déplacés.
                   </p>
-                  <BlockOrderEditor
+                  <SortableBlockEditor
                     blocks={blockOrder}
+                    lockedBlocks={lockedBlocks}
                     onOrderChange={(newBlocks) => {
                       setBlockOrder(newBlocks);
                       if (notice) setNotice('');
