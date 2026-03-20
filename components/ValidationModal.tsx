@@ -26,7 +26,7 @@ const ACCESS_OPTIONS: { id: AccessLevel; label: string; description: string }[] 
     {
         id: 'later',
         label: 'À définir plus tard',
-        description: 'Le mémorial est publié mais non accessible publiquement pour l'instant.',
+        description: "Le mémorial est publié mais non accessible publiquement pour l'instant.",
     },
 ];
 
