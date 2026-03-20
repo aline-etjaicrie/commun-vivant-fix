@@ -5,11 +5,12 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
-    ChevronLeft, Save, Eye, Type, Flame, Video, Palette as PaletteIcon,
-    Layout, ChevronUp, ChevronDown, Check, X, AlertOctagon, HelpCircle,
+    ChevronLeft, Save, Eye, Type, Flame, Palette as PaletteIcon,
+    Layout, ChevronUp, ChevronDown, Check, HelpCircle,
     Music, Image as ImageIcon, MapPin
 } from 'lucide-react';
 import MemorialPreview from '@/components/MemorialPreview';
+import ValidationModal from '@/components/ValidationModal';
 
 const LucideIconPicker = dynamic(() => import('@/components/LucideIconPicker'), {
     loading: () => <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm"><div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div></div>,
@@ -148,8 +149,11 @@ export default function PersonalizePage() {
         }
     };
 
-    const handleConfirmPublish = () => {
-        // Here we would save everything
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const handleConfirmPublish = (accessLevel: 'open' | 'restricted' | 'later') => {
+        setIsProcessing(true);
+        // TODO: persister accessLevel et les préférences de personnalisation
         router.push(`/dashboard/${id}/publish`);
     };
 
@@ -416,37 +420,12 @@ export default function PersonalizePage() {
             )}
 
             {/* Validation Modal */}
-            {isPublishModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl animate-scale-in">
-                        <div className="flex justify-center mb-6">
-                            <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
-                                <AlertOctagon className="w-8 h-8" />
-                            </div>
-                        </div>
-                        <h2 className="text-2xl font-serif text-[#0F2A44] text-center mb-4">Confirmation Requise</h2>
-                        <div className="bg-amber-50 p-6 rounded-xl border border-amber-200 mb-6">
-                            <p className="text-sm text-amber-900 leading-relaxed font-medium">
-                                "Je reconnais être le seul responsable du contenu de ce mémorial. Je m'engage à ce que tous les éléments partagés respectent la dignité du défunt et l'accord de ses proches."
-                            </p>
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setIsPublishModalOpen(false)}
-                                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium"
-                            >
-                                Retour
-                            </button>
-                            <button
-                                onClick={handleConfirmPublish}
-                                className="flex-1 px-4 py-3 bg-[#0F2A44] text-white rounded-xl hover:bg-[#0F2A44]/90 font-medium"
-                            >
-                                J'accepte et je publie
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ValidationModal
+                isOpen={isPublishModalOpen}
+                onClose={() => setIsPublishModalOpen(false)}
+                onConfirm={handleConfirmPublish}
+                isProcessing={isProcessing}
+            />
         </div>
     );
 }
