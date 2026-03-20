@@ -7,7 +7,9 @@ import {
   ChevronLeft,
   Eye,
   FileText,
+  GripVertical,
   Heart,
+  ImageIcon,
   Link2,
   Loader2,
   Music,
@@ -19,6 +21,8 @@ import {
   Trash2,
   Type,
 } from 'lucide-react';
+import BlockOrderEditor from '@/components/BlockOrderEditor';
+import { type BlockType } from '@/lib/layouts';
 import { resolveCommunTypeFromPayload } from '@/lib/almaProfiles';
 import {
   type CommunType,
@@ -63,6 +67,31 @@ import {
 import { buildMemoryFallbackText } from '@/lib/memoryFallbackText';
 import { blobToURL, getPhoto } from '@/lib/indexedDB';
 import PublishedMemorialRenderer from '@/components/memorial/PublishedMemorialRenderer';
+
+const COLOR_PALETTES: Array<{
+  id: string;
+  name: string;
+  primary: string;
+  secondary: string;
+  bg: string;
+}> = [
+  { id: 'navy-gold', name: 'Original', primary: '#0F2A44', secondary: '#C9A24D', bg: '#F5F4F2' },
+  { id: 'forest', name: 'Nature', primary: '#2C5F2D', secondary: '#97BC62', bg: '#FAF9F7' },
+  { id: 'slate', name: 'Pierre', primary: '#334155', secondary: '#94a3b8', bg: '#f8fafc' },
+  { id: 'rose', name: 'Douceur', primary: '#8B3A52', secondary: '#D4A0B0', bg: '#FDF7F8' },
+  { id: 'gold', name: 'Lumière', primary: '#7A5A2E', secondary: '#D4AF37', bg: '#FFFBF0' },
+];
+
+const PHOTO_FILTER_OPTIONS: Array<{
+  id: string;
+  label: string;
+  css: string;
+}> = [
+  { id: 'none', label: 'Naturel', css: 'none' },
+  { id: 'sepia', label: 'Sépia', css: 'sepia(60%)' },
+  { id: 'bw', label: 'Noir & Blanc', css: 'grayscale(100%)' },
+  { id: 'vintage', label: 'Vintage', css: 'sepia(30%) brightness(0.95) contrast(1.05)' },
+];
 
 const TYPOGRAPHY_OPTIONS: Array<{
   id: TextTypography;
@@ -126,6 +155,10 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
   const [isSaving, setIsSaving] = useState(false);
   const [isOpeningPreview, setIsOpeningPreview] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [blockOrder, setBlockOrder] = useState<BlockType[]>([]);
+  const [colorPalette, setColorPalette] = useState<string>('navy-gold');
+  const [customColors, setCustomColors] = useState({ primary: '#0F2A44', secondary: '#C9A24D', bg: '#F5F4F2' });
+  const [photoFilter, setPhotoFilter] = useState<string>('none');
 
   const editorFontFamily = useMemo(() => {
     if (textTypography === 'sans') return 'var(--font-sans), system-ui, sans-serif';
@@ -210,6 +243,21 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
             : []
       );
       setFamily(previewData?.family || mergedQuestionnaire?.family || {});
+
+      const preset = getMemorialPreset(detectedCommunType);
+      const initialBlockOrder = sanitizeBlockOrder(previewData?.blockOrder || preset.blockOrder);
+      setBlockOrder(initialBlockOrder);
+
+      const savedFilter = previewData?.photoFilter || media?.photoFilter || 'none';
+      setPhotoFilter(savedFilter);
+
+      const savedPaletteId = previewData?.colorPalette;
+      if (savedPaletteId) {
+        setColorPalette(savedPaletteId);
+        const found = COLOR_PALETTES.find(p => p.id === savedPaletteId);
+        if (found) setCustomColors({ primary: found.primary, secondary: found.secondary, bg: found.bg });
+        else if (previewData?.colors) setCustomColors(previewData.colors);
+      }
 
       if (!initialText.trim()) {
         const fallbackText = buildMemoryFallbackText({
@@ -352,8 +400,10 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
       writingStyle,
       style: writingStyle,
       layout: getLegacyLayoutIdForCompositionModel(compositionModel),
-      blockOrder: sanitizeBlockOrder(preset.blockOrder),
-      photoFilter: mediaData?.photoFilter || 'none',
+      blockOrder: blockOrder.length > 0 ? blockOrder : sanitizeBlockOrder(preset.blockOrder),
+      photoFilter,
+      colorPalette,
+      colors: customColors,
       message: questionnaire?.message?.hasMessage ? questionnaire.message : undefined,
       publishedAt: new Date().toISOString(),
       liensWeb: cleanLinks,
@@ -362,12 +412,16 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
       textTypography,
     };
   }, [
+    blockOrder,
     cleanLinks,
+    colorPalette,
     communType,
     compositionModel,
+    customColors,
     hasFamilyData,
     mediaData,
     normalizedFamily,
+    photoFilter,
     questionnaireData,
     text,
     textTypography,
@@ -864,6 +918,92 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                   })}
                 </div>
               </div>
+
+              <div className="mt-8">
+                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#0F2A44]">
+                  <Palette className="h-4 w-4 text-[#A27C53]" />
+                  Palette de couleurs
+                </div>
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
+                  {COLOR_PALETTES.map((palette) => {
+                    const isSelected = colorPalette === palette.id;
+                    return (
+                      <button
+                        key={palette.id}
+                        type="button"
+                        onClick={() => {
+                          setColorPalette(palette.id);
+                          setCustomColors({ primary: palette.primary, secondary: palette.secondary, bg: palette.bg });
+                          if (notice) setNotice('');
+                        }}
+                        className={`rounded-[18px] border p-3 text-center transition ${
+                          isSelected
+                            ? 'border-[#A27C53] bg-[#FFF8EE] shadow-sm'
+                            : 'border-[#EAE2D6] bg-[#FFFEFC] hover:border-[#D9C2A1]'
+                        }`}
+                      >
+                        <div className="mx-auto mb-2 h-8 w-8 rounded-full border border-black/10" style={{ background: `linear-gradient(135deg, ${palette.primary} 50%, ${palette.secondary} 50%)` }} />
+                        <p className="text-xs font-medium text-[#0F2A44]">{palette.name}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-3">
+                  {(['primary', 'secondary', 'bg'] as const).map((key) => {
+                    const labels = { primary: 'Couleur principale', secondary: 'Couleur accent', bg: 'Fond' };
+                    return (
+                      <label key={key} className="flex flex-col gap-1.5">
+                        <span className="text-xs text-[#5E6B78]">{labels[key]}</span>
+                        <div className="flex items-center gap-2 rounded-xl border border-[#E5DED2] bg-white px-3 py-2">
+                          <input
+                            type="color"
+                            value={customColors[key]}
+                            onChange={(e) => {
+                              setColorPalette('custom');
+                              setCustomColors((prev) => ({ ...prev, [key]: e.target.value }));
+                            }}
+                            className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0"
+                          />
+                          <span className="font-mono text-xs text-[#5E6B78]">{customColors[key]}</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#0F2A44]">
+                  <ImageIcon className="h-4 w-4 text-[#A27C53]" />
+                  Filtre photo
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {PHOTO_FILTER_OPTIONS.map((filter) => {
+                    const isSelected = photoFilter === filter.id;
+                    return (
+                      <button
+                        key={filter.id}
+                        type="button"
+                        onClick={() => {
+                          setPhotoFilter(filter.id);
+                          if (notice) setNotice('');
+                        }}
+                        className={`rounded-[18px] border p-3 text-center transition ${
+                          isSelected
+                            ? 'border-[#A27C53] bg-[#FFF8EE]'
+                            : 'border-[#EAE2D6] bg-[#FFFEFC] hover:border-[#D9C2A1]'
+                        }`}
+                      >
+                        <div
+                          className="mx-auto mb-2 h-10 w-10 rounded-xl bg-[#D9C4A8]"
+                          style={{ filter: filter.css }}
+                        />
+                        <p className="text-xs font-medium text-[#0F2A44]">{filter.label}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </section>
 
             <section className="rounded-[32px] border border-[#E7DDCF] bg-white p-6 shadow-sm">
@@ -967,6 +1107,25 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                   ))}
                 </div>
               </div>
+
+              {blockOrder.length > 0 && (
+                <div className="mt-8">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#0F2A44]">
+                    <GripVertical className="h-4 w-4 text-[#A27C53]" />
+                    Organisation des blocs
+                  </div>
+                  <p className="mb-4 text-sm text-[#5E6B78]">
+                    Glissez-déposez ou utilisez les flèches pour changer l'ordre des sections dans la page finale.
+                  </p>
+                  <BlockOrderEditor
+                    blocks={blockOrder}
+                    onOrderChange={(newBlocks) => {
+                      setBlockOrder(newBlocks);
+                      if (notice) setNotice('');
+                    }}
+                  />
+                </div>
+              )}
 
               <div className="mt-8 rounded-[28px] border border-[#EAE2D6] bg-[#FCFBF8] p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
