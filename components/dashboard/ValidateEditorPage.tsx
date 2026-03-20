@@ -94,6 +94,12 @@ const PHOTO_FILTER_OPTIONS: Array<{
   { id: 'vintage', label: 'Vintage', css: 'sepia(30%) brightness(0.95) contrast(1.05)' },
 ];
 
+const TEMPLATE_IMAGES: Record<string, string> = {
+  'portrait-sensitive': '/capture-mina.png',
+  'memory-album': '/marie-mini.png',
+  'heritage-transmission': '/meuble.jpg',
+};
+
 const TYPOGRAPHY_OPTIONS: Array<{
   id: TextTypography;
   label: string;
@@ -442,14 +448,21 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
     writingStyle,
   ]);
 
-  const previewTemplate = useMemo(
-    () =>
-      applyTypographyPreference(
-        buildThemeTemplate(visualTheme, communType),
-        resolveTypographyPreference(textTypography)
-      ),
-    [communType, textTypography, visualTheme]
-  );
+  const previewTemplate = useMemo(() => {
+    const base = applyTypographyPreference(
+      buildThemeTemplate(visualTheme, communType),
+      resolveTypographyPreference(textTypography)
+    );
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        bg: customColors.bg,
+        text: customColors.primary,
+        accent: customColors.secondary,
+      },
+    };
+  }, [communType, customColors, textTypography, visualTheme]);
 
   const communConfig = getCommunTypeConfig(communType);
   const recommendedCompositionModel = useMemo(
@@ -641,208 +654,178 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
       </header>
 
       <main className="mx-auto max-w-[1500px] px-6 py-8">
-        <div className="mb-8 grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(380px,0.98fr)]">
-          <section className="rounded-[32px] border border-[#E7DDCF] bg-white px-6 py-6 shadow-[0_30px_80px_rgba(15,42,68,0.06)]">
-            <div className="flex items-start gap-3">
-              <div className="mt-1 rounded-full bg-[#FBF4E8] p-2 text-[#A27C53]">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <div>
-                <h1 className="text-3xl text-[#0F2A44] sm:text-4xl" style={{ fontFamily: 'var(--font-serif)' }}>
-                  Choisir le rendu final
-                </h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5E6B78] sm:text-base">
-                  Commence par le modèle qui donnera son rythme à la page. L’ambiance visuelle, la
-                  voix du texte et les blocs sensibles viendront ensuite affiner cette composition.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em] text-[#7A5A2E]">
-                  <span>Modèle : {currentModel.label}</span>
-                  <span>·</span>
-                  <span>Ambiance : {currentTheme.label}</span>
-                  <span>·</span>
-                  <span>Ton : {currentWritingStyle.label}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 grid gap-4 lg:grid-cols-3">
-              {FINAL_TEMPLATES.map((template) => {
-                const isSelected = compositionModel === template.id;
-                const isRecommended = recommendedCompositionModel === template.id;
-                const themeGradients: Record<string, string> = {
-                  'memorial-soft': 'linear-gradient(145deg, #FFF9F1 0%, #EADBC8 62%, #C9A46A 100%)',
-                  'celebration-vivid': 'linear-gradient(145deg, #17233A 0%, #F04D74 62%, #F8D46B 100%)',
-                  'night-cinematic': 'linear-gradient(145deg, #0E1626 0%, #23314D 58%, #D4A96A 100%)',
-                };
-
-                return (
-                  <button
-                    key={template.id}
-                    type="button"
-                    onClick={() => {
-                      setCompositionModel(template.id);
-                      setLockedBlocks(template.lockedBlocks);
-                      // Reset block order to template default when changing template
-                      setBlockOrder(sanitizeBlockOrder(template.defaultBlockOrder));
-                      if (notice) setNotice('');
-                    }}
-                    className={`rounded-[30px] border p-5 text-left transition ${
-                      isSelected
-                        ? 'border-[#A27C53] bg-[#FFF8EE] shadow-[0_22px_48px_rgba(162,124,83,0.14)]'
-                        : 'border-[#EAE2D6] bg-[#FFFEFC] hover:border-[#D9C2A1] hover:shadow-[0_18px_34px_rgba(15,42,68,0.06)]'
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      {isRecommended && (
-                        <span className="inline-flex rounded-full bg-[#FBF1DF] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8C6635]">
-                          Recommandé
-                        </span>
-                      )}
-                      {isSelected && (
-                        <span className="inline-flex rounded-full bg-[#0F2A44] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
-                          Sélectionné
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Thumbnail éditorial */}
-                    <div
-                      className="mt-4 overflow-hidden rounded-[20px]"
-                      style={{
-                        background: themeGradients[template.defaultVisualTheme] ?? themeGradients['memorial-soft'],
-                      }}
-                    >
-                      <div className="flex h-32 gap-2.5 p-3">
-                        <div className="flex-[1.1] overflow-hidden rounded-[14px] bg-white/85 p-2.5 shadow-sm">
-                          <div className="h-10 rounded-[10px] bg-black/10" />
-                          <div className="mt-2.5 h-2 w-4/5 rounded-full bg-black/15" />
-                          <div className="mt-1.5 h-2 w-2/3 rounded-full bg-black/10" />
-                          <div className="mt-1.5 h-2 w-1/2 rounded-full bg-black/8" />
-                        </div>
-                        <div className="flex flex-1 flex-col gap-1.5">
-                          <div className="flex-1 rounded-[12px] bg-white/75 px-2.5 py-2 shadow-sm">
-                            <div className="h-1.5 w-3/4 rounded-full bg-black/15" />
-                            <div className="mt-1 h-1.5 w-full rounded-full bg-black/8" />
-                            <div className="mt-1 h-1.5 w-2/3 rounded-full bg-black/8" />
-                          </div>
-                          <div className="flex-1 rounded-[12px] bg-white/65 px-2.5 py-2 shadow-sm">
-                            <div className="h-1.5 w-1/2 rounded-full bg-black/12" />
-                            <div className="mt-1 h-8 rounded-[8px] bg-black/10" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <p className="mt-4 text-xl font-semibold text-[#0F2A44]">{template.label}</p>
-                    <p className="mt-1.5 text-sm leading-6 text-[#5E6B78]">{template.tagline}</p>
-
-                    {/* Lien vers l'exemple de référence */}
-                    <Link
-                      href={`/exemple/${template.exampleSlug}`}
-                      target="_blank"
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-3 inline-flex items-center gap-1 text-xs text-[#A27C53] underline-offset-2 hover:underline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Voir l'exemple : {template.exampleTitle}
-                    </Link>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-6 rounded-[28px] border border-[#ECE2D4] bg-[#FCF7F0] px-5 py-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="max-w-3xl">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8C6635]">
-                    Sélection actuelle
-                  </p>
-                  <h2
-                    className="mt-2 text-2xl text-[#0F2A44] sm:text-3xl"
-                    style={{ fontFamily: 'var(--font-serif)' }}
-                  >
-                    {currentModel.label}
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-[#5E6B78] sm:text-base">
-                    {currentModel.signature}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em] text-[#7A5A2E]">
-                  <span className="rounded-full border border-[#E2D6C6] bg-white px-3 py-2">
-                    {currentTheme.label}
-                  </span>
-                  <span className="rounded-full border border-[#E2D6C6] bg-white px-3 py-2">
-                    {currentWritingStyle.label}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {notice ? (
-              <div className="mt-5 rounded-2xl border border-[#D7EAD8] bg-[#F4FBF4] px-4 py-3 text-sm text-[#2F5B35]">
-                {notice}
-              </div>
-            ) : null}
-          </section>
-
-          <aside className="xl:sticky xl:top-24 xl:self-start">
-            <div className="overflow-hidden rounded-[32px] border border-[#D7CCBC] bg-white shadow-[0_30px_80px_rgba(15,42,68,0.08)]">
-              <div className="flex items-center justify-between border-b border-[#ECE4D8] px-5 py-4">
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#7A5A2E]">
-                    Aperçu fidèle
-                  </h2>
-                  <p className="mt-1 text-xs text-[#6E6A63]">
-                    Même structure, même ambiance, mêmes blocs que la page finale.
-                  </p>
-                </div>
-                <button
-                  onClick={handlePreview}
-                  disabled={isBusy}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#D8D3CA] px-3 py-2 text-xs font-medium text-[#0F2A44] disabled:opacity-60"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  Grand aperçu
-                </button>
-              </div>
-              <div className="max-h-[calc(100vh-180px)] overflow-auto bg-[#F7F2EA]">
-                <PublishedMemorialRenderer
-                  memorial={studioPreviewData}
-                  communType={communType}
-                  memorialId={memoryId}
-                  currentTemplate={previewTemplate}
-                  compositionModel={compositionModel}
-                  visualTheme={visualTheme}
-                  writingStyle={writingStyle}
-                  profilePhotoUrl={profilePhotoUrl}
-                  galleryMediasWithUrls={galleryMediasWithUrls}
-                  audioUrl={audioUrl}
-                  audioTitle={audioTitle}
-                  embedded
-                />
-              </div>
-            </div>
-          </aside>
-        </div>
-
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1.02fr)_minmax(380px,0.98fr)]">
           <div className="space-y-8">
+
+            {/* ─── SECTION 1 : Le texte ─────────────────────────────── */}
             <section className="rounded-[32px] border border-[#E7DDCF] bg-white p-6 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="rounded-full bg-[#FBF4E8] p-2 text-[#A27C53]">
-                  <Palette className="h-4 w-4" />
+                  <FileText className="h-4 w-4" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-[#0F2A44]">Ambiance et voix éditoriale</h2>
+                  <h2 className="text-xl font-semibold text-[#0F2A44]">1 — Le texte</h2>
                   <p className="mt-1 text-sm text-[#5E6B78]">
-                    Une fois le modèle choisi, affine sa lumière, sa voix et la manière de lire le
-                    récit.
+                    Ajuste le nom affiché, puis reprends librement le texte final avant l&apos;aperçu.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-[#0F2A44]">Prénom affiché</label>
+                  <input
+                    type="text"
+                    value={questionnaireData?.identite?.prenom || ''}
+                    onChange={(event) => updateIdentityField('prenom', event.target.value)}
+                    onBlur={() => normalizeIdentityField('prenom')}
+                    placeholder="Ex. : Madeleine"
+                    className="w-full rounded-2xl border border-[#E5DED2] bg-[#FCFBF8] px-4 py-3 text-base text-[#0F2A44] outline-none transition focus:border-[#C9A24D]/50"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-[#0F2A44]">Nom affiché</label>
+                  <input
+                    type="text"
+                    value={questionnaireData?.identite?.nom || ''}
+                    onChange={(event) => updateIdentityField('nom', event.target.value)}
+                    onBlur={() => normalizeIdentityField('nom')}
+                    placeholder="Ex. : Roux"
+                    className="w-full rounded-2xl border border-[#E5DED2] bg-[#FCFBF8] px-4 py-3 text-base text-[#0F2A44] outline-none transition focus:border-[#C9A24D]/50"
+                  />
+                </div>
+              </div>
+
+              <label className="mt-6 mb-3 block text-sm font-semibold text-[#0F2A44]">
+                Texte principal
+              </label>
+              <textarea
+                value={text}
+                onChange={(event) => {
+                  setText(event.target.value);
+                  if (notice) setNotice('');
+                }}
+                spellCheck
+                placeholder="Le texte apparaîtra ici. Vous pourrez le reprendre librement."
+                className="min-h-[460px] w-full rounded-[28px] border border-[#E5DED2] bg-[#FCFBF8] p-6 text-lg leading-8 text-[#0F2A44] outline-none transition focus:border-[#C9A24D]/50"
+                style={{ fontFamily: editorFontFamily }}
+              />
+
+              {!text.trim() ? (
+                <div className="mt-4 rounded-2xl border border-[#F0D9C8] bg-[#FFF7F1] px-4 py-3 text-sm text-[#8A4C25]">
+                  Le texte est vide pour l&apos;instant. Vous pouvez revenir à la génération ou écrire
+                  une première base ici directement.
+                </div>
+              ) : null}
+            </section>
+
+            {/* ─── SECTION 2 : Le rendu ─────────────────────────────── */}
+            <section className="rounded-[32px] border border-[#E7DDCF] bg-white px-6 py-6 shadow-[0_30px_80px_rgba(15,42,68,0.06)]">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 rounded-full bg-[#FBF4E8] p-2 text-[#A27C53]">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-3xl text-[#0F2A44] sm:text-4xl" style={{ fontFamily: 'var(--font-serif)' }}>
+                    2 — Le rendu
+                  </h2>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5E6B78] sm:text-base">
+                    Choisis le modèle qui donnera son rythme à la page. L&apos;ambiance visuelle et
+                    la voix du texte viendront ensuite affiner la composition.
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em] text-[#7A5A2E]">
+                    <span>Modèle : {currentModel.label}</span>
+                    <span>·</span>
+                    <span>Ambiance : {currentTheme.label}</span>
+                    <span>·</span>
+                    <span>Ton : {currentWritingStyle.label}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 grid gap-4 lg:grid-cols-3">
+                {FINAL_TEMPLATES.map((template) => {
+                  const isSelected = compositionModel === template.id;
+                  const isRecommended = recommendedCompositionModel === template.id;
+                  return (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => {
+                        setCompositionModel(template.id);
+                        setLockedBlocks(template.lockedBlocks);
+                        setBlockOrder(sanitizeBlockOrder(template.defaultBlockOrder));
+                        if (notice) setNotice('');
+                      }}
+                      className={`rounded-[30px] border p-5 text-left transition ${
+                        isSelected
+                          ? 'border-[#A27C53] bg-[#FFF8EE] shadow-[0_22px_48px_rgba(162,124,83,0.14)]'
+                          : 'border-[#EAE2D6] bg-[#FFFEFC] hover:border-[#D9C2A1] hover:shadow-[0_18px_34px_rgba(15,42,68,0.06)]'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        {isRecommended && (
+                          <span className="inline-flex rounded-full bg-[#FBF1DF] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8C6635]">
+                            Recommandé
+                          </span>
+                        )}
+                        {isSelected && (
+                          <span className="inline-flex rounded-full bg-[#0F2A44] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+                            Sélectionné
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-4 overflow-hidden rounded-[20px]">
+                        <img
+                          src={TEMPLATE_IMAGES[template.id] ?? ''}
+                          alt={template.exampleTitle}
+                          className="h-32 w-full object-cover"
+                        />
+                      </div>
+                      <p className="mt-4 text-xl font-semibold text-[#0F2A44]">{template.label}</p>
+                      <p className="mt-1.5 text-sm leading-6 text-[#5E6B78]">{template.tagline}</p>
+                      <Link
+                        href={`/exemple/${template.exampleSlug}`}
+                        target="_blank"
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-3 inline-flex items-center gap-1 text-xs text-[#A27C53] underline-offset-2 hover:underline"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Voir l&apos;exemple : {template.exampleTitle}
+                      </Link>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 rounded-[28px] border border-[#ECE2D4] bg-[#FCF7F0] px-5 py-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="max-w-3xl">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8C6635]">
+                      Sélection actuelle
+                    </p>
+                    <h3
+                      className="mt-2 text-2xl text-[#0F2A44] sm:text-3xl"
+                      style={{ fontFamily: 'var(--font-serif)' }}
+                    >
+                      {currentModel.label}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-[#5E6B78] sm:text-base">
+                      {currentModel.signature}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em] text-[#7A5A2E]">
+                    <span className="rounded-full border border-[#E2D6C6] bg-white px-3 py-2">
+                      {currentTheme.label}
+                    </span>
+                    <span className="rounded-full border border-[#E2D6C6] bg-white px-3 py-2">
+                      {currentWritingStyle.label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8">
                 <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#0F2A44]">
                   <Palette className="h-4 w-4 text-[#A27C53]" />
                   Ambiance visuelle
@@ -912,7 +895,28 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                 </div>
               </div>
 
-              <div className="mt-8">
+              {notice ? (
+                <div className="mt-5 rounded-2xl border border-[#D7EAD8] bg-[#F4FBF4] px-4 py-3 text-sm text-[#2F5B35]">
+                  {notice}
+                </div>
+              ) : null}
+            </section>
+
+            {/* ─── SECTION 3 : L'apparence ─────────────────────────── */}
+            <section className="rounded-[32px] border border-[#E7DDCF] bg-white p-6 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-[#FBF4E8] p-2 text-[#A27C53]">
+                  <Palette className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-[#0F2A44]">3 — L&apos;apparence</h2>
+                  <p className="mt-1 text-sm text-[#5E6B78]">
+                    Typographie de lecture, palette de couleurs et filtre photo.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6">
                 <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#0F2A44]">
                   <Type className="h-4 w-4 text-[#A27C53]" />
                   Typographie de lecture
@@ -965,7 +969,10 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                             : 'border-[#EAE2D6] bg-[#FFFEFC] hover:border-[#D9C2A1]'
                         }`}
                       >
-                        <div className="mx-auto mb-2 h-8 w-8 rounded-full border border-black/10" style={{ background: `linear-gradient(135deg, ${palette.primary} 50%, ${palette.secondary} 50%)` }} />
+                        <div
+                          className="mx-auto mb-2 h-8 w-8 rounded-full border border-black/10"
+                          style={{ background: `linear-gradient(135deg, ${palette.primary} 50%, ${palette.secondary} 50%)` }}
+                        />
                         <p className="text-xs font-medium text-[#0F2A44]">{palette.name}</p>
                       </button>
                     );
@@ -1029,77 +1036,16 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
               </div>
             </section>
 
-            <section className="rounded-[32px] border border-[#E7DDCF] bg-white p-6 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-[#FBF4E8] p-2 text-[#A27C53]">
-                  <FileText className="h-4 w-4" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-[#0F2A44]">Texte et nom affiché</h2>
-                  <p className="mt-1 text-sm text-[#5E6B78]">
-                    Ajuste le nom, puis reprends librement le texte final avant l’aperçu.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#0F2A44]">Prénom affiché</label>
-                  <input
-                    type="text"
-                    value={questionnaireData?.identite?.prenom || ''}
-                    onChange={(event) => updateIdentityField('prenom', event.target.value)}
-                    onBlur={() => normalizeIdentityField('prenom')}
-                    placeholder="Ex. : Madeleine"
-                    className="w-full rounded-2xl border border-[#E5DED2] bg-[#FCFBF8] px-4 py-3 text-base text-[#0F2A44] outline-none transition focus:border-[#C9A24D]/50"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#0F2A44]">Nom affiché</label>
-                  <input
-                    type="text"
-                    value={questionnaireData?.identite?.nom || ''}
-                    onChange={(event) => updateIdentityField('nom', event.target.value)}
-                    onBlur={() => normalizeIdentityField('nom')}
-                    placeholder="Ex. : Roux"
-                    className="w-full rounded-2xl border border-[#E5DED2] bg-[#FCFBF8] px-4 py-3 text-base text-[#0F2A44] outline-none transition focus:border-[#C9A24D]/50"
-                  />
-                </div>
-              </div>
-
-              <label className="mt-6 mb-3 block text-sm font-semibold text-[#0F2A44]">
-                Texte principal
-              </label>
-              <textarea
-                value={text}
-                onChange={(event) => {
-                  setText(event.target.value);
-                  if (notice) setNotice('');
-                }}
-                spellCheck
-                placeholder="Le texte apparaîtra ici. Vous pourrez le reprendre librement."
-                className="min-h-[460px] w-full rounded-[28px] border border-[#E5DED2] bg-[#FCFBF8] p-6 text-lg leading-8 text-[#0F2A44] outline-none transition focus:border-[#C9A24D]/50"
-                style={{ fontFamily: editorFontFamily }}
-              />
-
-              {!text.trim() ? (
-                <div className="mt-4 rounded-2xl border border-[#F0D9C8] bg-[#FFF7F1] px-4 py-3 text-sm text-[#8A4C25]">
-                  Le texte est vide pour l’instant. Vous pouvez revenir à la génération ou écrire
-                  une première base ici directement.
-                </div>
-              ) : null}
-            </section>
-
+            {/* ─── SECTION 4 : Les détails ─────────────────────────── */}
             <section className="rounded-[32px] border border-[#E7DDCF] bg-white p-6 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="rounded-full bg-[#FBF4E8] p-2 text-[#A27C53]">
                   <Heart className="h-4 w-4" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-[#0F2A44]">Présences et ressources</h2>
+                  <h2 className="text-xl font-semibold text-[#0F2A44]">4 — Les détails</h2>
                   <p className="mt-1 text-sm text-[#5E6B78]">
-                    Musique, gestes d’hommage, liens utiles et arbre généalogique restent pleinement
-                    intégrés à la composition finale.
+                    Hommage visuel, organisation des blocs, musique, liens et arbre généalogique.
                   </p>
                 </div>
               </div>
@@ -1137,7 +1083,7 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                     Organisation des blocs
                   </div>
                   <p className="mb-4 text-sm text-[#5E6B78]">
-                    Glissez-déposez ou utilisez les flèches pour changer l'ordre des sections.
+                    Glissez-déposez ou utilisez les flèches pour changer l&apos;ordre des sections.
                     Les blocs <span className="font-medium text-[#9E9585]">fixe</span> font partie de la structure du template et ne peuvent pas être déplacés.
                   </p>
                   <SortableBlockEditor
@@ -1170,7 +1116,6 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                     Modifier les médias
                   </Link>
                 </div>
-
                 {audioUrl ? (
                   <div className="mt-4 space-y-3">
                     <div className="rounded-2xl border border-[#E4D7C8] bg-white px-4 py-3">
@@ -1178,7 +1123,7 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                         {audioTitle || 'Musique sélectionnée'}
                       </p>
                       <p className="mt-1 text-xs text-[#6E6A63]">
-                        Lecteur visible dans l’aperçu et la page finale.
+                        Lecteur visible dans l&apos;aperçu et la page finale.
                       </p>
                     </div>
                     <audio controls className="w-full">
@@ -1210,7 +1155,6 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                 <p className="mb-4 text-sm text-[#5E6B78]">
                   Ajoutez ici une cagnotte, un lien de fleurs, ou tout autre lien externe utile.
                 </p>
-
                 {liensWeb.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#D8D3CA] px-4 py-4 text-sm text-[#6E6A63]">
                     Aucun lien pour le moment.
@@ -1290,11 +1234,50 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                 </div>
               </div>
             </section>
+
           </div>
 
-          <div className="hidden xl:block" />
+          <aside className="xl:sticky xl:top-24 xl:self-start">
+            <div className="overflow-hidden rounded-[32px] border border-[#D7CCBC] bg-white shadow-[0_30px_80px_rgba(15,42,68,0.08)]">
+              <div className="flex items-center justify-between border-b border-[#ECE4D8] px-5 py-4">
+                <div>
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#7A5A2E]">
+                    Aperçu fidèle
+                  </h2>
+                  <p className="mt-1 text-xs text-[#6E6A63]">
+                    Même structure, même ambiance, mêmes blocs que la page finale.
+                  </p>
+                </div>
+                <button
+                  onClick={handlePreview}
+                  disabled={isBusy}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#D8D3CA] px-3 py-2 text-xs font-medium text-[#0F2A44] disabled:opacity-60"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Grand aperçu
+                </button>
+              </div>
+              <div className="max-h-[calc(100vh-180px)] overflow-auto bg-[#F7F2EA]">
+                <PublishedMemorialRenderer
+                  memorial={studioPreviewData}
+                  communType={communType}
+                  memorialId={memoryId}
+                  currentTemplate={previewTemplate}
+                  compositionModel={compositionModel}
+                  visualTheme={visualTheme}
+                  writingStyle={writingStyle}
+                  profilePhotoUrl={profilePhotoUrl}
+                  galleryMediasWithUrls={galleryMediasWithUrls}
+                  audioUrl={audioUrl}
+                  audioTitle={audioTitle}
+                  embedded
+                />
+              </div>
+            </div>
+          </aside>
         </div>
       </main>
     </div>
   );
 }
+                                                                                                                                                                              

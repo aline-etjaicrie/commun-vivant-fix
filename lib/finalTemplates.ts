@@ -65,15 +65,14 @@ export const FINAL_TEMPLATES: FinalTemplate[] = [
     defaultBlockOrder: [
       'profile',   // verrouillé — hero portrait
       'text',      // verrouillé — récit principal
-      'gallery',
       'gouts',
-      'family',
+      'gallery',
       'quote',
+      'family',
+      'links',
+      'location',
       'messages',
       'candle',
-      'links',
-      'contribute',
-      'location',
     ],
     lockedBlocks: ['profile', 'text'],
   },
@@ -93,13 +92,12 @@ export const FINAL_TEMPLATES: FinalTemplate[] = [
       'gallery',
       'text',      // verrouillé — récit
       'gouts',
-      'quote',
       'messages',
-      'family',
+      'quote',
       'links',
-      'contribute',
       'candle',
-      'location',
+      'family',
+      'contribute',
     ],
     lockedBlocks: ['profile', 'text'],
   },
@@ -116,16 +114,15 @@ export const FINAL_TEMPLATES: FinalTemplate[] = [
     defaultTributeMode: 'none',
     defaultBlockOrder: [
       'profile',   // verrouillé — hero document/objet
-      'text',      // verrouillé — récit
       'family',
-      'gallery',
-      'quote',
-      'gouts',
       'location',
-      'messages',
       'links',
+      'quote',
+      'text',      // verrouillé — récit
+      'gouts',
+      'gallery',
+      'messages',
       'contribute',
-      'candle',
     ],
     lockedBlocks: ['profile', 'text'],
   },
