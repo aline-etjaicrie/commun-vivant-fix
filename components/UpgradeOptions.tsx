@@ -79,7 +79,7 @@ export default function UpgradeOptions({ context, firstName = 'cette personne', 
         // onSelect({ total: currentTotal, options: selectedOptions, extension, objectCount });
         alert(`Paiement de ${currentTotal}€ simulé. Redirection...`);
         // redirect to next step or stripe
-        router.push('/create/complete?payment_success=true');
+        router.push('/medias');
     };
 
     return (

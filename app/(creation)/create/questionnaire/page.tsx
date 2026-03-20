@@ -232,15 +232,17 @@ function QuestionnaireContent() {
       if (isIsolated) {
         router.push(`/questionnaire-dev/finalisation?context=${context}&communType=${communType}`);
       } else {
-        router.push('/medias');
+        // Effacer le teaser précédent pour forcer une nouvelle génération
+        localStorage.removeItem('alma_teaser_text');
+        router.push(`/create/apercu?context=${encodeURIComponent(context)}&communType=${encodeURIComponent(communType)}`);
       }
     } catch (error) {
       console.error('Preparation brouillon/aperçu impossible', error);
-      // Repli : continuer le flux initial
       if (isIsolated) {
         router.push(`/questionnaire-dev/finalisation?context=${context}&communType=${communType}`);
       } else {
-        router.push('/medias');
+        localStorage.removeItem('alma_teaser_text');
+        router.push(`/create/apercu?context=${encodeURIComponent(context)}&communType=${encodeURIComponent(communType)}`);
       }
     } finally {
       setIsSubmitting(false);
