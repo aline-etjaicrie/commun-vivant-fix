@@ -11,6 +11,34 @@ import { getSupabaseAdmin } from '@/lib/server/supabaseAdmin';
 
 export const runtime = 'nodejs';
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { user } = await getAuthenticatedUser(request);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { id } = await params;
+    const memoryId = String(id || '');
+
+    const admin = getSupabaseAdmin();
+    const accessProfile = await getMemoryAccessProfile(admin, memoryId, user.id);
+    const memory = accessProfile.memory;
+
+    if (!memory) {
+      return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      accessLevel: memory.access_level ?? 'ouvert',
+      publicationStatus: memory.publication_status ?? 'draft',
+    });
+  } catch (error) {
+    console.error('USER DASH memorial state GET error:', error);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+}
 
 const ALLOWED_PUBLICATION_STATUS = new Set(['draft', 'published', 'archived']);
 const ALLOWED_ACCESS_LEVEL = new Set(['ouvert', 'restreint', 'a_definir_plus_tard']);

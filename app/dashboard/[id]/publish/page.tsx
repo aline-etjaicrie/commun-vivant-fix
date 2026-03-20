@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { CheckCircle, Clock, Lock, Share2, Eye, Settings } from 'lucide-react';
 import Link from 'next/link';
@@ -7,15 +8,37 @@ import { Suspense } from 'react';
 
 type AccessLevel = 'ouvert' | 'restreint' | 'a_definir_plus_tard';
 
+function isValidAccessLevel(v: string | null): v is AccessLevel {
+    return v === 'ouvert' || v === 'restreint' || v === 'a_definir_plus_tard';
+}
+
 function PublishPageContent() {
     const params = useParams();
     const searchParams = useSearchParams();
     const id = params?.id as string;
-    const rawLevel = searchParams?.get('accessLevel');
-    const accessLevel: AccessLevel =
-        rawLevel === 'restreint' || rawLevel === 'a_definir_plus_tard'
-            ? rawLevel
-            : 'ouvert';
+
+    // Param URL comme état optimiste immédiat (juste après redirection depuis personalize)
+    const urlLevel = searchParams?.get('accessLevel');
+    const optimisticLevel: AccessLevel = isValidAccessLevel(urlLevel) ? urlLevel : 'ouvert';
+
+    const [accessLevel, setAccessLevel] = useState<AccessLevel>(optimisticLevel);
+    const [loadedFromDB, setLoadedFromDB] = useState(false);
+
+    useEffect(() => {
+        if (!id) return;
+        fetch(`/api/user-dashboard/memorials/${id}/state`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (data && isValidAccessLevel(data.accessLevel)) {
+                    setAccessLevel(data.accessLevel);
+                }
+                setLoadedFromDB(true);
+            })
+            .catch(() => {
+                // En cas d'erreur réseau, on conserve la valeur optimiste de l'URL
+                setLoadedFromDB(true);
+            });
+    }, [id]);
 
     if (accessLevel === 'restreint') {
         return (
