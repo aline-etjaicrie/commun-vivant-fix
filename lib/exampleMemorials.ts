@@ -168,24 +168,23 @@ export const EXAMPLE_MEMORIALS: ExampleMemorial[] = [
       textTypography: 'sans',
     },
     gallery: [
-      { id: 'marie-1', url: '/marie-mini.png', type: 'image', caption: 'Portrait de Marie' },
+      {
+        id: 'marie-1',
+        url: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=1200&q=80',
+        type: 'image',
+        caption: 'Portrait de Marie',
+      },
       {
         id: 'marie-2',
         url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1200&q=80',
         type: 'image',
-        caption: 'Moments partages en famille',
+        caption: 'Moments partagés en famille',
       },
       {
         id: 'marie-3',
         url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80',
         type: 'image',
         caption: 'Dans son atelier',
-      },
-      {
-        id: 'marie-4',
-        url: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=1200&q=80',
-        type: 'image',
-        caption: 'Portrait lumineux',
       },
     ],
   },
