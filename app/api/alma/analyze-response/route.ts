@@ -50,13 +50,17 @@ export async function POST(request: NextRequest) {
     TA MISSION :
     1. Analyse la réponse pour extraire TOUTES les nouvelles informations (prénom, nom, dates, lieux, liens, anecdotes, sentiments...).
     2. Détermine la prochaine question la plus naturelle et fluide.
-    3. Si la réponse est floue ("C'était bien"), pose une question de relance douce ("Qu'est-ce qui vous a le plus marqué ?").
-    4. Si l'utilisateur indique qu'il a fini ("C'est tout", "J'ai fini", "Stop"), ta nextQuestion DOIT être : "Merci pour cette confiance. Je vous redirige maintenant."
+    3. Si la réponse est floue ou très courte ("C'était bien", "Oui"), pose une question de relance douce ("Qu'est-ce qui vous a le plus marqué ?").
+    4. DÉTECTION DE FIN: Si l'utilisateur dit clairement "j'ai fini", "c'est tout", "stop", "fin" ou équivalent, ta nextQuestion DOIT ÊTRE VIDE ("").
+    5. NE PAS forcer la fin : seulement si l'utilisateur le dit explicitement.
+
+    IMPORTANT: Si la réponse est confuse ou ne contient pas vraiment d'information nouvelles, pose une relance douce plutôt que d'avancer.
 
     Retourne UNIQUEMENT un JSON :
     {
       "extractedInfo": { "firstname": "...", "lastname": "...", ... },
-      "nextQuestion": "Ta question ici...",
+      "nextQuestion": "Ta question ici, ou vide si l'utilisateur a indiqué qu'il a fini",
+      "userWantsToFinish": true/false,
       "confidence": 0.9
     }`;
 
@@ -71,7 +75,7 @@ export async function POST(request: NextRequest) {
             body: JSON.stringify({
                 model: 'mistral-large-latest',
                 messages: [
-                    { role: 'system', content: 'Tu es une IA experte en extraction d\'information. Réponds uniquement en JSON valide.' },
+                    { role: 'system', content: 'Tu es une IA experte en extraction d\'information et analyse de fin de conversation. Réponds uniquement en JSON valide.' },
                     { role: 'user', content: prompt }
                 ],
                 temperature: 0.2,
@@ -92,16 +96,5 @@ export async function POST(request: NextRequest) {
             // Fallback simple
             return NextResponse.json({
                 nextQuestion: "Je vous écoute, continuez.",
-                confidence: 0,
-                extractedInfo: {}
-            }, { status: 200 });
-        }
-
-        console.log('✅ Analyse ALMA:', analysis);
-        return NextResponse.json(analysis, { status: 200 });
-
-    } catch (error) {
-        console.error('❌ Erreur serveur analyze-response:', error);
-        return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
-    }
-}
+                userWantsToFinish: false,
+                

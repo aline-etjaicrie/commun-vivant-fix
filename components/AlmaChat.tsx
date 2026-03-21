@@ -195,11 +195,13 @@ export default function AlmaChat({
 
   const [questionsCount, setQuestionsCount] = useState(0);
   const MAX_QUESTIONS = 6;
+  const MIN_USER_MESSAGES = 3; // Minimum matière avant de pouvoir finir
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [styleSelectionError, setStyleSelectionError] = useState(''); // Nouveau: suivi erreur validation style
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -455,9 +457,23 @@ export default function AlmaChat({
   const [isWaitingForStyle, setIsWaitingForStyle] = useState(false);
 
   const handleFinish = async () => {
+    // GARDE-FOU 1: Vérifier matière minimale
+    if (userMessageCount < MIN_USER_MESSAGES) {
+      const remaining = MIN_USER_MESSAGES - userMessageCount;
+      const msg: Message = {
+        role: 'assistant',
+        content: `Je vous remercie pour ce début. 😊\n\nIl me manque encore ${remaining} ${remaining === 1 ? 'élément' : 'éléments'} pour rédiger une base fidèle.\n\nPouvez-vous partager :\n• Un souvenir ou anecdote\n• Un trait de caractère marquant\n• Quelque chose qui tenait à cœur\n\nEnsuite, je vous demanderai de choisir le ton, et nous pourrons générer votre aperçu.`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, msg]);
+      localStorage.setItem(conversationKey, JSON.stringify([...messages, msg]));
+      return;
+    }
+
     if (isLoading || isFinishing || isWaitingForStyle) return;
 
     setIsFinishing(true);
+    setStyleSelectionError('');
 
     // 1. Acknowledge user finish
     const userMsg: Message = {
@@ -466,10 +482,10 @@ export default function AlmaChat({
       timestamp: new Date(),
     };
 
-    // 2. Ask for style preference
+    // 2. Ask for style preference with clearer wording
     const almaMsg: Message = {
       role: 'assistant',
-      content: "Merci pour ce partage. Avant de rédiger votre première ébauche, quel ton préféreriez-vous ?\n\nVous pouvez choisir par exemple :\n• Poétique et émouvant\n• Sobre et factuel\n• Chaleureux et familial",
+      content: "Merci pour ce partage si riche. 💝\n\nAvant de générer votre aperçu, j'aimerais que vous confirmiez le ton. Quel style vous parle ?\n\n• 🕯️ Poétique et émouvant\n• 📖 Sobre et factuel\n• 🏡 Chaleureux et familial",
       timestamp: new Date(),
     };
 
@@ -496,7 +512,14 @@ export default function AlmaChat({
   };
 
   const handleStyleSelection = async (styleInput: string) => {
+    // VALIDATION: Vérifier que c'est un style valide (au minimum non-vide et pertinent)
+    if (!styleInput.trim() || styleInput.length < 2) {
+      setStyleSelectionError('Veuillez choisir ou décrire un ton.');
+      return;
+    }
+
     setIsLoading(true);
+    setStyleSelectionError('');
 
     // Add user's style choice to chat
     const styleMsg: Message = {
@@ -512,7 +535,31 @@ export default function AlmaChat({
     localStorage.setItem(conversationKey, JSON.stringify(currentHistory));
 
     try {
-      // Générer l'aperçu avec le style
+      // VALIDATION STEP 1: Vérifier que le teaser peut être généré (matière suffisante + style valide)
+      const validationResponse = await fetch('/api/alma/validate-teaser-readiness', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationHistory: currentHistory.map(m => ({ role: m.role, content: m.content })),
+          collectedInfo: collectedInfo,
+          userMessageCount: userMessageCount,
+          minRequired: MIN_USER_MESSAGES,
+        }),
+      });
+
+      if (!validationResponse.ok) {
+        throw new Error('Erreur validation');
+      }
+
+      const validation = await validationResponse.json();
+
+      if (!validation.isReady) {
+        setStyleSelectionError(validation.message || 'Il manque encore des éléments. Pouvez-vous continuer ?');
+        setIsLoading(false);
+        return;
+      }
+
+      // VALIDATION STEP 2: Générer le teaser avec matière validée
       const response = await fetch('/api/alma/generate-teaser', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -523,7 +570,7 @@ export default function AlmaChat({
           communType,
           genre: genre,
           subjectName: subjectName,
-          preferredStyle: styleInput, // Pass the style
+          preferredStyle: styleInput,
         }),
       });
 
@@ -572,6 +619,7 @@ export default function AlmaChat({
       console.error('Erreur style:', error);
       setIsLoading(false);
       setIsWaitingForStyle(false); // Reset to allow retry
+      setStyleSelectionError('Un problème technique est survenu. Veuillez réessayer votre choix de ton.');
       const errorMessage: Message = {
         role: 'assistant',
         content: "Je suis désolée, j'ai eu des difficultés à générer l'aperçu. Pouvez-vous répéter votre ton préféré ?",
@@ -583,9 +631,9 @@ export default function AlmaChat({
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* Bandeau explicatif */}
+      {/* Bandeau explicatif - clarifie l'expérience */}
       <div className="p-3 bg-memoir-bg text-memoir-blue text-xs text-center border-b border-memoir-gold/20 font-serif italic">
-        Alma est là pour vous écouter. Cliquez sur les suggestions pour enrichir le récit instantanément.
+        Alma vous écoute. Partagez librement — il vous faudra au moins {MIN_USER_MESSAGES} réponses avant de générer l'aperçu.
       </div>
 
       <div className="flex-1 flex overflow-hidden min-h-[calc(100vh-120px)] relative">
@@ -713,31 +761,57 @@ export default function AlmaChat({
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Affichage des erreurs de validation du style */}
+          {isWaitingForStyle && styleSelectionError && (
+            <div className="p-4 border-t border-amber-200 bg-amber-50">
+              <p className="text-sm text-amber-800 font-medium">⚠️ {styleSelectionError}</p>
+            </div>
+          )}
+
           {/* Input */}
           <div className="p-4 border-t border-memoir-gold/10 bg-white">
             <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide flex-col">
               <div className="flex items-center justify-between w-full">
-                {/* Barre de progression */}
+                {/* Barre de progression avec state clair */}
                 <div className="flex-1 mr-4">
                   <div className="flex justify-between text-xs text-memoir-blue/40 mb-1">
-                    <span>Question {Math.min(userMessageCount + 1, MAX_QUESTIONS)} / {MAX_QUESTIONS}</span>
-                    <span>{Math.round((userMessageCount / MAX_QUESTIONS) * 100)}%</span>
+                    <span>
+                      {isWaitingForStyle 
+                        ? 'Étape : Choix du ton' 
+                        : `Matière collectée : ${userMessageCount}/${MIN_USER_MESSAGES}`}
+                    </span>
+                    <span>
+                      {isWaitingForStyle 
+                        ? '100%' 
+                        : `${Math.round((userMessageCount / MIN_USER_MESSAGES) * 100)}%`}
+                    </span>
                   </div>
-                  <div className="h-1 bg-memoir-blue/10 rounded-full">
+                  <div className="h-1.5 bg-memoir-blue/10 rounded-full overflow-hidden">
                     <div
-                      className="h-1 bg-memoir-gold rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min((userMessageCount / MAX_QUESTIONS) * 100, 100)}%` }}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${
+                        isWaitingForStyle 
+                          ? 'w-full bg-memoir-gold' 
+                          : userMessageCount >= MIN_USER_MESSAGES
+                          ? 'w-full bg-green-500'
+                          : 'bg-memoir-gold'
+                      }`}
+                      style={{ width: `${isWaitingForStyle ? 100 : Math.min((userMessageCount / MIN_USER_MESSAGES) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
 
-                {/* Bouton "J'ai tout dit" toujours disponible */}
+                {/* Bouton "J'ai tout dit" avec logique d'état clair */}
                 <button
                   onClick={handleFinish}
-                  disabled={isLoading || isFinishing || isWaitingForStyle}
+                  disabled={isLoading || isFinishing}
                   className="whitespace-nowrap px-4 py-1.5 bg-green-50 text-green-700 rounded-full text-xs hover:bg-green-100 transition-colors border border-green-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                  title="Cliquez quand vous avez partagé ce que vous vouliez"
                 >
-                  {isWaitingForStyle ? 'Ton en attente…' : '✓ Générer mon aperçu'}
+                  {isWaitingForStyle 
+                    ? '✓ Choisir le ton' 
+                    : userMessageCount < MIN_USER_MESSAGES
+                    ? `J'ai fini (${userMessageCount}/${MIN_USER_MESSAGES})`
+                    : '✓ J\'ai tout dit'}
                 </button>
               </div>
             </div>
@@ -760,90 +834,4 @@ export default function AlmaChat({
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
-                className="px-4 py-3 bg-memoir-gold text-white rounded-xl hover:bg-memoir-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm mb-1"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar Contextuelle (1/3) - Overlay on mobile */}
-        <div className={`
-          bg-memoir-bg border-l border-memoir-gold/10 overflow-y-auto custom-scrollbar
-          md:w-1/3 md:block md:static md:p-6
-          ${showMobileSuggestions ? 'absolute inset-0 z-20 w-full block p-6' : 'hidden'}
-        `}>
-          <div className="mb-6 flex justify-between items-start">
-            <div>
-              <h3 className="text-sm font-semibold text-memoir-blue mb-1 flex items-center gap-2 font-serif italic">
-                ✨ Boîte à inspiration
-              </h3>
-              <p className="text-xs text-memoir-blue/50">
-                Cliquez pour envoyer directement l'idée à Alma.
-              </p>
-            </div>
-            <button
-              onClick={() => setShowMobileSuggestions(false)}
-              className="md:hidden p-1 text-memoir-blue/50 hover:text-memoir-blue"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="space-y-6 pb-20">
-            {/* 1. Identité & Caractère */}
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-bold text-memoir-gold uppercase tracking-widest pl-1">Sa nature profonde</h4>
-              <div className="flex flex-wrap gap-2">
-                {suggestions.adjectifs.map((phrase, i) => (
-                  <button key={i} onClick={() => handleQuickSend(phrase)} className={QUICK_TAG_CLASS}>
-                    {phrase}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 2. Valeurs */}
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-bold text-memoir-gold uppercase tracking-widest pl-1">Ses valeurs</h4>
-              <div className="flex flex-wrap gap-2">
-                {suggestions.valeurs.map((phrase, i) => (
-                  <button key={i} onClick={() => handleQuickSend(phrase)} className={QUICK_TAG_CLASS}>
-                    {phrase.split(': ')[1] || phrase}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 3. Passions & Goûts */}
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-bold text-memoir-gold uppercase tracking-widest pl-1">Ses amours</h4>
-              <div className="flex flex-wrap gap-2">
-                {suggestions.passions.map((phrase, i) => (
-                  <button key={i} onClick={() => handleQuickSend(phrase)} className={QUICK_TAG_CLASS}>
-                    {phrase.replace(/.*aimait passionnément /, '')}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 4. Humour & Souvenirs */}
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-bold text-memoir-gold uppercase tracking-widest pl-1">Sourires & Anecdotes</h4>
-              <div className="flex flex-wrap gap-2">
-                {suggestions.souvenirs.map((phrase, i) => (
-                  <button key={i} onClick={() => handleQuickSend(phrase)} className={QUICK_TAG_CLASS}>
-                    {phrase.replace('Je me souviens de ça : ', '')}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div >
-      </div >
-
-
-    </div >
-  );
-}
+                className="px-4 py-3 bg-memoir-gold text-white rounded-xl hover:bg-memoir-gold/90 transition-color

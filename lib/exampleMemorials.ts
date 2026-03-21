@@ -111,7 +111,7 @@ export const EXAMPLE_MEMORIALS: ExampleMemorial[] = [
     cardTitle: 'Marie, 50 ans de vie et d’élan',
     cardDescription:
       "Un hommage vivant pour célébrer une personne entourée de ses proches, avec images, messages et une énergie très lumineuse.",
-    coverImage: '/marie-mini.png',
+    coverImage: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=1600&q=85',
     communType: 'hommage-vivant',
     compositionModel: 'memory-album',
     visualTheme: 'celebration-vivid',
@@ -270,5 +270,4 @@ export const EXAMPLE_MEMORIALS: ExampleMemorial[] = [
 ];
 
 export function getExampleMemorialBySlug(slug: string): ExampleMemorial | undefined {
-  return EXAMPLE_MEMORIALS.find((example) => example.slug === slug);
-}
+  return EXAMP

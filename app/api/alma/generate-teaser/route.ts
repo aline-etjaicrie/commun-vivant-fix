@@ -15,11 +15,22 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
         }
 
-        // Construire le prompt pour le TEASER
-        const conversationText = conversationHistory
+        // VALIDATION: Vérifier qu'on a assez de conversation
+        const userMessages = (conversationHistory || [])
             .filter((m: any) => m.role === 'user')
-            .map((m: any) => m.content)
-            .join('\n');
+            .map((m: any) => m.content || '');
+        
+        if (userMessages.length < 2) {
+            console.warn('⚠️ Tentative de génération avec matière insuffisante');
+            return NextResponse.json({
+                teaserText: 'Impossible de générer avec si peu d\'information. Continuez votre conversation avec Alma.',
+                success: false,
+                error: 'insufficient_material'
+            }, { status: 400 });
+        }
+
+        // Construire le prompt pour le TEASER
+        const conversationText = userMessages.join('\n');
 
         const prompt = `Tu es Alma, biographe sensible.
 Profil actif : ${profile.label} (${resolvedCommunType})
@@ -83,21 +94,4 @@ Retourne UNIQUEMENT le texte, sans introduction ni conclusion.`;
         if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ Erreur Mistral Teaser:', errorText);
-            return NextResponse.json({ message: "Erreur génération" }, { status: 500 });
-        }
-
-        const data = await response.json();
-        const teaserText = data.choices?.[0]?.message?.content?.trim();
-
-        console.log('✅ Teaser généré:', teaserText);
-
-        return NextResponse.json({
-            teaserText: teaserText,
-            success: true
-        });
-
-    } catch (error) {
-        console.error('❌ Erreur serveur generate-teaser:', error);
-        return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
-    }
-}
+            return NextResponse.json({ m

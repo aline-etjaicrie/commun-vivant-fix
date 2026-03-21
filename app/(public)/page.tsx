@@ -241,7 +241,7 @@ export default function HomePage() {
               >
                 <div className="relative w-full h-full rounded-[20px] overflow-hidden p-2">
                   <Image
-                    src="/marie-mini.png"
+                    src="https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=600&q=80"
                     alt="Mémoire de Marie - Fêter"
                     fill
                     className="object-cover"
@@ -460,9 +460,4 @@ export default function HomePage() {
             <Link href="mailto:contact@etjaicrie.fr" className="hover:text-memoir-gold transition-colors">Contact</Link>
           </nav>
 
-          <p className="text-xs text-memoir-blue/20 pt-8">© {new Date().getFullYear()} Commun Vivant (v2.4)</p>
-        </div>
-      </footer>
-    </div>
-  );
-}
+          <p className="text-xs text-memoir-blue/20 pt-8">© {new Date().getFullYear()} Commun Vivant (v2.

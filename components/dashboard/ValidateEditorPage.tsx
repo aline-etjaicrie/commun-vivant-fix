@@ -146,7 +146,7 @@ const PHOTO_FILTER_OPTIONS: Array<{
 
 const TEMPLATE_IMAGES: Record<string, string> = {
   'portrait-sensitive': '/capture-mina.png',
-  'memory-album': '/marie-mini.png',
+  'memory-album': 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800&q=80',
   'heritage-transmission': '/meuble.jpg',
 };
 
@@ -1374,9 +1374,4 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
             setBlockIcons((prev) => ({ ...prev, [activeIconPicker]: iconName }));
             setActiveIconPicker(null);
           }}
-          onClose={() => setActiveIconPicker(null)}
-        />
-      )}
-    </div>
-  );
-}
+          onClose={() => setActive
