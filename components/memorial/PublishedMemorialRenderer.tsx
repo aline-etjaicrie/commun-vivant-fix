@@ -426,28 +426,105 @@ export default function PublishedMemorialRenderer({
       style={{
         borderColor: theme.colors.border,
         background: `linear-gradient(135deg, ${theme.preview.from}, ${theme.preview.via}, ${theme.preview.to})`,
+        minHeight: embedded ? '280px' : '460px',
       }}
     >
+      {/* Photo de fond si disponible */}
       {heroImage ? (
-        <div className="absolute inset-0 opacity-90">
-          <RawImage
-            src={heroImage}
-            alt={[identite?.prenom, identite?.nom].filter(Boolean).join(' ').trim() || 'Souvenir'}
-            className="h-full w-full object-cover"
-          />
+        <>
+          <div className="absolute inset-0">
+            <RawImage
+              src={heroImage}
+              alt={[identite?.prenom, identite?.nom].filter(Boolean).join(' ').trim() || 'Souvenir'}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          {/* Overlay plus fort pour lisibilité */}
           <div
             className="absolute inset-0"
             style={{
-              background:
-                theme.id === 'night-cinematic'
-                  ? 'linear-gradient(180deg, rgba(9,14,24,0.3), rgba(9,14,24,0.82))'
-                  : 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(19,28,41,0.62))',
+              background: 'linear-gradient(180deg, rgba(10,15,30,0.25) 0%, rgba(10,15,30,0.75) 60%, rgba(10,15,30,0.92) 100%)',
             }}
           />
-        </div>
+        </>
       ) : null}
-      <div className={`relative ${embedded ? 'min-h-[280px]' : 'min-h-[460px]'} flex items-end`}>
-        {heroShared}
+
+      {/* Texte en bas, toujours lisible */}
+      <div className="absolute inset-0 flex items-end">
+        <div
+          style={{
+            '--hero-text': heroImage ? '#FFFFFF' : currentTemplate.colors.text,
+            '--hero-text-secondary': heroImage ? 'rgba(255,255,255,0.82)' : currentTemplate.colors.textSecondary,
+            '--hero-accent': heroImage ? 'rgba(255,255,255,0.7)' : currentTemplate.colors.accent,
+          } as React.CSSProperties}
+          className={`w-full ${embedded ? 'px-4 py-6' : 'px-6 py-8 md:px-10 md:py-12'}`}
+        >
+          {/* Badges */}
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span
+              className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]"
+              style={{
+                borderColor: heroImage ? 'rgba(255,255,255,0.3)' : hexToRgba(theme.colors.accent, 0.26),
+                backgroundColor: heroImage ? 'rgba(255,255,255,0.15)' : hexToRgba(theme.colors.accent, 0.12),
+                color: 'var(--hero-text)',
+              }}
+            >
+              {communLabel}
+            </span>
+            {showCompositionBadges ? (
+              <span
+                className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]"
+                style={{
+                  borderColor: heroImage ? 'rgba(255,255,255,0.3)' : hexToRgba(theme.colors.accent, 0.26),
+                  backgroundColor: heroImage ? 'rgba(255,255,255,0.15)' : hexToRgba(theme.colors.accent, 0.12),
+                  color: 'var(--hero-text)',
+                }}
+              >
+                {model.label}
+              </span>
+            ) : null}
+            {showCompositionBadges ? (
+              <span
+                className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]"
+                style={{
+                  borderColor: heroImage ? 'rgba(255,255,255,0.3)' : hexToRgba(theme.colors.accent, 0.2),
+                  backgroundColor: heroImage ? 'rgba(255,255,255,0.1)' : hexToRgba(theme.colors.accent, 0.08),
+                  color: 'var(--hero-text)',
+                }}
+              >
+                {editorialTone.label}
+              </span>
+            ) : null}
+          </div>
+
+          {/* Nom */}
+          <h1
+            className={`${embedded ? 'text-4xl' : 'text-5xl md:text-[5.25rem] lg:text-[6.4rem]'} font-serif leading-[0.92] tracking-[-0.03em]`}
+            style={{ color: 'var(--hero-text)' }}
+          >
+            {[identite?.prenom, identite?.nom].filter(Boolean).join(' ').trim() || 'Commun Vivant'}
+          </h1>
+
+          {/* Dates */}
+          {(identite?.dateNaissance || identite?.dateDeces) ? (
+            <p
+              className={`${embedded ? 'mt-3 text-sm' : 'mt-4 text-base md:text-lg'} uppercase tracking-[0.22em]`}
+              style={{ color: 'var(--hero-accent)' }}
+            >
+              {[identite?.dateNaissance, identite?.dateDeces].filter(Boolean).join(' — ')}
+            </p>
+          ) : null}
+
+          {/* Citation */}
+          {quoteText ? (
+            <p
+              className={`${embedded ? 'mt-5 text-lg' : 'mt-8 text-2xl md:text-[2rem]'} max-w-3xl font-serif italic leading-[1.55]`}
+              style={{ color: 'var(--hero-text-secondary)' }}
+            >
+              &ldquo;{quoteText}&rdquo;
+            </p>
+          ) : null}
+        </div>
       </div>
     </section>
   );
