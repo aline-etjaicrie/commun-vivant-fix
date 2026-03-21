@@ -97,4 +97,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 nextQuestion: "Je vous écoute, continuez.",
                 userWantsToFinish: false,
-                
+                confidence: 0,
+                extractedInfo: {}
+            }, { status: 200 });
+        }
+
+        console.log('✅ Analyse ALMA:', analysis);
+        return NextResponse.json(analysis, { status: 200 });
+
+    } catch (error) {
+        console.error('❌ Erreur serveur analyze-response:', error);
+        return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+    }
+}
