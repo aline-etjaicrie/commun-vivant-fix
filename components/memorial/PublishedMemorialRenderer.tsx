@@ -212,7 +212,14 @@ export default function PublishedMemorialRenderer({
   const theme = getVisualTheme(visualTheme);
   const model = getCompositionModel(compositionModel);
   const editorialTone = getWritingStyle(writingStyle);
-  const isLightBg = isLightVisualTheme(visualTheme);
+  const isLightBg = (() => {
+    const hex = currentTemplate.colors.bg.replace('#', '');
+    if (hex.length < 6) return isLightVisualTheme(visualTheme);
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 >= 0.5;
+  })();
   const communLabel =
     communType === 'hommage-vivant'
       ? 'Hommage vivant'

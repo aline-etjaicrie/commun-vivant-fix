@@ -105,6 +105,12 @@ const COLOR_PALETTES: ColorPalette[] = [
   { id: 'ardoise-rose', name: 'Ardoise et rose', family: 'Sobres vivants', primary: '#2C3E50', secondary: '#34495E', accent: '#C0727F', bg: '#F9F7F8', text: '#1A252F' },
   { id: 'nuit-etoilee', name: 'Nuit étoilée', family: 'Sobres vivants', primary: '#0A0E27', secondary: '#1A237E', accent: '#FFD700', bg: '#F8F8FF', text: '#FAFAFA' },
   { id: 'original', name: 'Original', family: 'Sobres vivants', primary: '#0F2A44', secondary: '#2B5F7D', accent: '#C9A24D', bg: '#F5F4F2', text: '#0F2A44' },
+  // FAMILLE 4 — NÉON & CONTRASTE
+  { id: 'neon-vert', name: 'Vert néon', family: 'Néon & Contraste', primary: '#0A0A0A', secondary: '#39FF14', accent: '#39FF14', bg: '#0D0D0D', text: '#F5F5F5' },
+  { id: 'neon-bleu', name: 'Bleu électrique', family: 'Néon & Contraste', primary: '#050A1A', secondary: '#00F5FF', accent: '#00F5FF', bg: '#07101F', text: '#F0FAFF' },
+  { id: 'neon-rose', name: 'Rose flashy', family: 'Néon & Contraste', primary: '#1A0010', secondary: '#FF006E', accent: '#FF006E', bg: '#120008', text: '#FFF0F7' },
+  { id: 'neon-violet', name: 'Violet électrique', family: 'Néon & Contraste', primary: '#0D0010', secondary: '#BF00FF', accent: '#BF00FF', bg: '#0A000D', text: '#F8F0FF' },
+  { id: 'neon-jaune', name: 'Jaune solaire', family: 'Néon & Contraste', primary: '#0A0800', secondary: '#FFE600', accent: '#FFE600', bg: '#0D0B00', text: '#FFFDF0' },
 ];
 
 function isLightText(palette: { bg: string }): boolean {
@@ -1023,43 +1029,54 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                   <Palette className="h-4 w-4 text-[#A27C53]" />
                   Palette de couleurs
                 </div>
-                {(['Intenses', 'Chaleureux', 'Sobres vivants'] as const).map((family) => (
-                  <div key={family} className="mb-4">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9E9585]">{family}</p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {COLOR_PALETTES.filter((p) => p.family === family).map((palette) => {
-                        const isSelected = colorPalette === palette.id;
-                        return (
-                          <button
-                            key={palette.id}
-                            type="button"
-                            onClick={() => {
-                              setColorPalette(palette.id);
-                              setCustomColors({
-                                bg: palette.bg,
-                                text: resolveTextColor(palette),
-                                accent: palette.accent,
-                                textSecondary: palette.secondary,
-                              });
-                              if (notice) setNotice('');
-                            }}
-                            className={`rounded-[18px] border p-2.5 text-center transition ${
-                              isSelected
-                                ? 'border-[#A27C53] bg-[#FFF8EE] shadow-sm'
-                                : 'border-[#EAE2D6] bg-[#FFFEFC] hover:border-[#D9C2A1]'
-                            }`}
-                          >
-                            <div
-                              className="mx-auto mb-1.5 h-7 w-7 rounded-full border border-black/10"
-                              style={{ background: `linear-gradient(135deg, ${palette.primary} 50%, ${palette.accent} 50%)` }}
-                            />
-                            <p className="text-[10px] font-medium leading-tight text-[#0F2A44]">{palette.name}</p>
-                          </button>
-                        );
-                      })}
+                {(['Intenses', 'Chaleureux', 'Sobres vivants', 'Néon & Contraste'] as const).map((family) => {
+                  const isNeonFamily = family === 'Néon & Contraste';
+                  const selectedIsNeon = isNeonFamily && COLOR_PALETTES.find(p => p.id === colorPalette)?.family === 'Néon & Contraste';
+                  return (
+                    <div key={family} className="mb-4">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9E9585]">{family}</p>
+                      <div className="grid grid-cols-5 gap-2">
+                        {COLOR_PALETTES.filter((p) => p.family === family).map((palette) => {
+                          const isSelected = colorPalette === palette.id;
+                          return (
+                            <button
+                              key={palette.id}
+                              type="button"
+                              onClick={() => {
+                                setColorPalette(palette.id);
+                                setCustomColors({
+                                  bg: palette.bg,
+                                  text: resolveTextColor(palette),
+                                  accent: palette.accent,
+                                  textSecondary: palette.secondary,
+                                });
+                                if (notice) setNotice('');
+                              }}
+                              className={`rounded-[18px] border p-2.5 text-center transition ${
+                                isSelected
+                                  ? 'border-[#A27C53] bg-[#FFF8EE] shadow-sm'
+                                  : isNeonFamily
+                                    ? 'border-[#1A1A1A] bg-[#0D0D0D] hover:border-[#444]'
+                                    : 'border-[#EAE2D6] bg-[#FFFEFC] hover:border-[#D9C2A1]'
+                              }`}
+                            >
+                              <div
+                                className="mx-auto mb-1.5 h-7 w-7 rounded-full border border-black/20"
+                                style={{ background: `linear-gradient(135deg, ${palette.primary} 50%, ${palette.accent} 50%)` }}
+                              />
+                              <p className={`text-[10px] font-medium leading-tight ${isNeonFamily ? 'text-[#AAAAAA]' : 'text-[#0F2A44]'}`}>{palette.name}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {isNeonFamily && (
+                        <p className={`mt-2 text-[10px] leading-relaxed transition-colors ${selectedIsNeon ? 'text-[#C9A24D]' : 'text-[#9E9585]'}`}>
+                          ✦ Palette audacieuse — idéale pour les célébrations et les profils qui aiment l&apos;intensité.
+                        </p>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 <div className="mt-4 grid grid-cols-3 gap-3">
                   {(['text', 'accent', 'bg'] as const).map((key) => {
                     const labels = { text: 'Texte principal', accent: 'Couleur accent', bg: 'Fond' };
