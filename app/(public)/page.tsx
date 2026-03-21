@@ -460,4 +460,9 @@ export default function HomePage() {
             <Link href="mailto:contact@etjaicrie.fr" className="hover:text-memoir-gold transition-colors">Contact</Link>
           </nav>
 
-          <p className="text-xs text-memoir-blue/20 pt-8">© {new Date().getFullYear()} Commun Vivant (v2.
+          <p className="text-xs text-memoir-blue/20 pt-8">© {new Date().getFullYear()} Commun Vivant (v2.4)</p>
+        </div>
+      </footer>
+    </div>
+  );
+}

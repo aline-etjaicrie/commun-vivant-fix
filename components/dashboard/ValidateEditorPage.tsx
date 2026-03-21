@@ -1374,4 +1374,9 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
             setBlockIcons((prev) => ({ ...prev, [activeIconPicker]: iconName }));
             setActiveIconPicker(null);
           }}
-          onClose={() => setActive
+          onClose={() => setActiveIconPicker(null)}
+        />
+      )}
+    </div>
+  );
+}

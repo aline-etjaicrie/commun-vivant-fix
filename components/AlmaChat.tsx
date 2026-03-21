@@ -834,4 +834,90 @@ export default function AlmaChat({
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
-                className="px-4 py-3 bg-memoir-gold text-white rounded-xl hover:bg-memoir-gold/90 transition-color
+                className="px-4 py-3 bg-memoir-gold text-white rounded-xl hover:bg-memoir-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm mb-1"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar Contextuelle (1/3) - Overlay on mobile */}
+        <div className={`
+          bg-memoir-bg border-l border-memoir-gold/10 overflow-y-auto custom-scrollbar
+          md:w-1/3 md:block md:static md:p-6
+          ${showMobileSuggestions ? 'absolute inset-0 z-20 w-full block p-6' : 'hidden'}
+        `}>
+          <div className="mb-6 flex justify-between items-start">
+            <div>
+              <h3 className="text-sm font-semibold text-memoir-blue mb-1 flex items-center gap-2 font-serif italic">
+                ✨ Boîte à inspiration
+              </h3>
+              <p className="text-xs text-memoir-blue/50">
+                Cliquez pour envoyer directement l'idée à Alma.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowMobileSuggestions(false)}
+              className="md:hidden p-1 text-memoir-blue/50 hover:text-memoir-blue"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-6 pb-20">
+            {/* 1. Identité & Caractère */}
+            <div className="space-y-2">
+              <h4 className="text-[10px] font-bold text-memoir-gold uppercase tracking-widest pl-1">Sa nature profonde</h4>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.adjectifs.map((phrase, i) => (
+                  <button key={i} onClick={() => handleQuickSend(phrase)} className={QUICK_TAG_CLASS}>
+                    {phrase}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Valeurs */}
+            <div className="space-y-2">
+              <h4 className="text-[10px] font-bold text-memoir-gold uppercase tracking-widest pl-1">Ses valeurs</h4>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.valeurs.map((phrase, i) => (
+                  <button key={i} onClick={() => handleQuickSend(phrase)} className={QUICK_TAG_CLASS}>
+                    {phrase.split(': ')[1] || phrase}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Passions & Goûts */}
+            <div className="space-y-2">
+              <h4 className="text-[10px] font-bold text-memoir-gold uppercase tracking-widest pl-1">Ses amours</h4>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.passions.map((phrase, i) => (
+                  <button key={i} onClick={() => handleQuickSend(phrase)} className={QUICK_TAG_CLASS}>
+                    {phrase.replace(/.*aimait passionnément /, '')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. Humour & Souvenirs */}
+            <div className="space-y-2">
+              <h4 className="text-[10px] font-bold text-memoir-gold uppercase tracking-widest pl-1">Sourires & Anecdotes</h4>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.souvenirs.map((phrase, i) => (
+                  <button key={i} onClick={() => handleQuickSend(phrase)} className={QUICK_TAG_CLASS}>
+                    {phrase.replace('Je me souviens de ça : ', '')}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div >
+      </div >
+
+
+    </div >
+  );
+}

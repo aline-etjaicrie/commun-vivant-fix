@@ -94,4 +94,21 @@ Retourne UNIQUEMENT le texte, sans introduction ni conclusion.`;
         if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ Erreur Mistral Teaser:', errorText);
-            return NextResponse.json({ m
+            return NextResponse.json({ message: "Erreur génération" }, { status: 500 });
+        }
+
+        const data = await response.json();
+        const teaserText = data.choices?.[0]?.message?.content?.trim();
+
+        console.log('✅ Teaser généré:', teaserText);
+
+        return NextResponse.json({
+            teaserText: teaserText,
+            success: true
+        });
+
+    } catch (error) {
+        console.error('❌ Erreur serveur generate-teaser:', error);
+        return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+    }
+}
