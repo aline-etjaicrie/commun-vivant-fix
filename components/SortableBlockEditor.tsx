@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, createElement } from 'react';
+import { useState } from 'react';
+import React from 'react';
 import {
   DndContext,
   closestCenter,
@@ -25,9 +26,10 @@ import { AVAILABLE_BLOCKS, type BlockType } from '@/lib/layouts';
 import { resolveBlockIcon } from '@/lib/blockIconRegistry';
 
 function BlockIconDisplay({ iconName }: { iconName?: string }) {
-  const Icon = resolveBlockIcon(iconName);
-  if (!Icon) return <Smile className="h-3.5 w-3.5 opacity-40" />;
-  return createElement(Icon, { className: 'h-3.5 w-3.5' });
+  const IconComponent = resolveBlockIcon(iconName);
+  if (!IconComponent) return <Smile className="h-3.5 w-3.5 opacity-40" />;
+  const El = IconComponent as React.ElementType;
+  return <El className="h-3.5 w-3.5" />;
 }
 
 interface SortableBlockEditorProps {

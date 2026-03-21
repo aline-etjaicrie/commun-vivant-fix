@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, createElement } from 'react';
+import { useState } from 'react';
+import React from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { GripVertical, Home, Share2, Sparkles } from 'lucide-react';
@@ -80,14 +81,15 @@ interface PublishedMemorialRendererProps {
 }
 
 function BlockIconBadge({ iconName, accentColor }: { iconName?: string; accentColor: string }) {
-  const Icon = resolveBlockIcon(iconName);
-  if (!Icon) return null;
+  const IconComponent = resolveBlockIcon(iconName);
+  if (!IconComponent) return null;
+  const El = IconComponent as React.ElementType;
   return (
     <div
       className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-md opacity-60"
       style={{ color: accentColor }}
     >
-      {createElement(Icon, { className: 'h-3.5 w-3.5' })}
+      <El className="h-3.5 w-3.5" />
     </div>
   );
 }
