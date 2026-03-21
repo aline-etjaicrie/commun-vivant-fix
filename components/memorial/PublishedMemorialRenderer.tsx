@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, createElement } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { GripVertical, Home, Share2, Sparkles } from 'lucide-react';
@@ -87,7 +87,7 @@ function BlockIconBadge({ iconName, accentColor }: { iconName?: string; accentCo
       className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-md opacity-60"
       style={{ color: accentColor }}
     >
-      <Icon className="h-3.5 w-3.5" />
+      {createElement(Icon, { className: 'h-3.5 w-3.5' })}
     </div>
   );
 }

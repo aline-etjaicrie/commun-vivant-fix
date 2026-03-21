@@ -797,6 +797,7 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                         )}
                       </div>
                       <div className="mt-4 overflow-hidden rounded-[20px]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={TEMPLATE_IMAGES[template.id] ?? ''}
                           alt={template.exampleTitle}
