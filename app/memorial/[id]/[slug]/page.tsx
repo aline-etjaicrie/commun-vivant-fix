@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 
-export default function LegacySlugPage({ params }: { params: { id: string; slug: string } }) {
-  redirect(`/memorial/${params.id}/preview`);
+export default async function LegacySlugPage({ params }: { params: Promise<{ id: string; slug: string }> }) {
+  const { id } = await params;
+  redirect(`/memorial/${id}/preview`);
 }
