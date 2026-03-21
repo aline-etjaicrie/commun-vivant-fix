@@ -24,7 +24,14 @@ const SCENARIOS = [
           saison: 'été',
         },
         talents: { carriere: 'Designer', passions: 'Cuisine et randonnée' },
-        liens: { personnesQuiComptent: 'Famille et amis proches' },
+        liens: {
+          personnesQuiComptent: 'Famille et amis proches',
+          constellation: [
+            { prenom: 'Sam', role: 'Partenaire de vie' },
+            { prenom: 'Jordan', role: 'Meilleur·e ami·e' },
+            { prenom: 'Morgan', role: 'Frère' },
+          ],
+        },
         resume: 'Alex fête ses 40 ans entouré·e des siens.',
       },
       finalization: {
@@ -70,6 +77,14 @@ Pour ces 40 ans, la famille et les amis se sont rassemblés pour dire tout ce qu
         },
         talents: { passions: 'Art nouveau, vitrail' },
         resume: 'Une lampe Tiffany transmise de génération en génération.',
+        liens: {
+          personnesQuiComptent: 'Transmise de génération en génération',
+          constellation: [
+            { prenom: 'Grand-mère Lucie', role: 'Première propriétaire' },
+            { prenom: 'Maman', role: 'Héritière' },
+            { prenom: 'Clara', role: 'Petite-fille' },
+          ],
+        },
       },
       finalization: {
         source: 'questionnaire',
@@ -115,6 +130,14 @@ Aujourd'hui, cette lampe ne vaut pas seulement pour son style art nouveau ou la 
         },
         talents: { carriere: 'Instituteur·rice', passions: 'Jardinage et lecture' },
         resume: 'Une vie simple et profondément humaine.',
+        liens: {
+          personnesQuiComptent: 'Ses élèves, sa famille, ses voisins de longue date',
+          constellation: [
+            { prenom: 'Élise', role: 'Fille' },
+            { prenom: 'Thomas', role: 'Petit-fils' },
+            { prenom: 'René', role: 'Ami de 40 ans' },
+          ],
+        },
       },
       finalization: {
         source: 'questionnaire',

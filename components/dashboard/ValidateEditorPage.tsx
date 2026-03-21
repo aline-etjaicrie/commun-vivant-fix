@@ -22,7 +22,6 @@ import {
   Trash2,
   Type,
 } from 'lucide-react';
-import SortableBlockEditor from '@/components/SortableBlockEditor';
 
 const LucideIconPicker = dynamic(() => import('@/components/LucideIconPicker'), {
   loading: () => (
@@ -175,7 +174,9 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
   const [blockOrder, setBlockOrder] = useState<BlockType[]>([]);
   const [lockedBlocks, setLockedBlocks] = useState<BlockType[]>(['profile', 'text']);
   const [colorPalette, setColorPalette] = useState<string>('navy-gold');
-  const [customColors, setCustomColors] = useState({ primary: '#0F2A44', secondary: '#C9A24D', bg: '#F5F4F2' });
+  const [customColors, setCustomColors] = useState<{
+    bg: string; text: string; accent: string; textSecondary: string;
+  } | null>(null);
   const [photoFilter, setPhotoFilter] = useState<string>('none');
   const [blockIcons, setBlockIcons] = useState<Record<string, string>>({
     candle: 'Flame',
@@ -271,7 +272,16 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
             ? mergedQuestionnaire.liensWeb
             : []
       );
-      setFamily(previewData?.family || mergedQuestionnaire?.family || {});
+      const constellationMembers = Array.isArray(questionnaire?.liens?.constellation)
+        ? questionnaire.liens.constellation
+        : [];
+      const questionnaireFamily = constellationMembers.length > 0
+        ? {
+            members: constellationMembers.map((p: any) => ({ prenom: p.prenom || '', nom: '', role: p.role || '' })),
+            story: questionnaire?.liens?.personnesQuiComptent || '',
+          }
+        : (mergedQuestionnaire?.family || null);
+      setFamily(previewData?.family || questionnaireFamily || {});
 
       const resolvedCompositionModel = resolveCompositionModel(
         previewData?.compositionModel || previewData?.layout,
@@ -289,11 +299,22 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
       setPhotoFilter(savedFilter);
 
       const savedPaletteId = previewData?.colorPalette;
-      if (savedPaletteId) {
-        setColorPalette(savedPaletteId);
-        const found = COLOR_PALETTES.find(p => p.id === savedPaletteId);
-        if (found) setCustomColors({ primary: found.primary, secondary: found.secondary, bg: found.bg });
-        else if (previewData?.colors) setCustomColors(previewData.colors);
+      if (savedPaletteId || previewData?.colors) {
+        const detectedVisualThemeId = resolveVisualTheme(previewData?.visualTheme || previewData?.template, detectedCommunType);
+        const baseColors = buildThemeTemplate(detectedVisualThemeId, detectedCommunType).colors;
+        const found = savedPaletteId ? COLOR_PALETTES.find(p => p.id === savedPaletteId) : null;
+        if (savedPaletteId) setColorPalette(savedPaletteId);
+        if (found) {
+          setCustomColors({ bg: found.bg, text: baseColors.text, accent: found.secondary, textSecondary: baseColors.textSecondary });
+        } else if (previewData?.colors) {
+          const c = previewData.colors;
+          setCustomColors({
+            bg: c.bg || baseColors.bg,
+            text: c.text || c.primary || baseColors.text,
+            accent: c.accent || c.secondary || baseColors.accent,
+            textSecondary: c.textSecondary || baseColors.textSecondary,
+          });
+        }
       }
 
       if (!initialText.trim()) {
@@ -431,6 +452,7 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
       gouts: questionnaire?.gouts || undefined,
       medias: mediaData || {},
       texteGenere: sanitizeGeneratedText(text),
+      citation: questionnaireData?.citation || questionnaireData?.gouts?.phrase || undefined,
       template: getLegacyTemplateIdForVisualTheme(visualTheme, communType),
       visualTheme,
       compositionModel,
@@ -474,15 +496,8 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
       buildThemeTemplate(visualTheme, communType),
       resolveTypographyPreference(textTypography)
     );
-    return {
-      ...base,
-      colors: {
-        ...base.colors,
-        bg: customColors.bg,
-        text: customColors.primary,
-        accent: customColors.secondary,
-      },
-    };
+    if (!customColors) return base;
+    return { ...base, colors: { ...base.colors, ...customColors } };
   }, [communType, customColors, textTypography, visualTheme]);
 
   const communConfig = getCommunTypeConfig(communType);
@@ -982,7 +997,8 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                         type="button"
                         onClick={() => {
                           setColorPalette(palette.id);
-                          setCustomColors({ primary: palette.primary, secondary: palette.secondary, bg: palette.bg });
+                          const base = buildThemeTemplate(visualTheme, communType);
+                          setCustomColors({ bg: palette.bg, text: base.colors.text, accent: palette.secondary, textSecondary: base.colors.textSecondary });
                           if (notice) setNotice('');
                         }}
                         className={`rounded-[18px] border p-3 text-center transition ${
@@ -1001,22 +1017,27 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                   })}
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-3">
-                  {(['primary', 'secondary', 'bg'] as const).map((key) => {
-                    const labels = { primary: 'Couleur principale', secondary: 'Couleur accent', bg: 'Fond' };
+                  {(['text', 'accent', 'bg'] as const).map((key) => {
+                    const labels = { text: 'Texte principal', accent: 'Couleur accent', bg: 'Fond' };
+                    const currentColor = customColors?.[key] ?? previewTemplate.colors[key] ?? '#000000';
                     return (
                       <label key={key} className="flex flex-col gap-1.5">
                         <span className="text-xs text-[#5E6B78]">{labels[key]}</span>
                         <div className="flex items-center gap-2 rounded-xl border border-[#E5DED2] bg-white px-3 py-2">
                           <input
                             type="color"
-                            value={customColors[key]}
+                            value={currentColor}
                             onChange={(e) => {
                               setColorPalette('custom');
-                              setCustomColors((prev) => ({ ...prev, [key]: e.target.value }));
+                              setCustomColors((prev) => {
+                                const base = buildThemeTemplate(visualTheme, communType);
+                                const fallback = { bg: base.colors.bg, text: base.colors.text, accent: base.colors.accent, textSecondary: base.colors.textSecondary };
+                                return { ...(prev ?? fallback), [key]: e.target.value };
+                              });
                             }}
                             className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0"
                           />
-                          <span className="font-mono text-xs text-[#5E6B78]">{customColors[key]}</span>
+                          <span className="font-mono text-xs text-[#5E6B78]">{currentColor}</span>
                         </div>
                       </label>
                     );
@@ -1099,27 +1120,6 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                 </div>
               </div>
 
-              {blockOrder.length > 0 && (
-                <div className="mt-8">
-                  <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-[#0F2A44]">
-                    Organisation des blocs
-                  </div>
-                  <p className="mb-4 text-sm text-[#5E6B78]">
-                    Glissez-déposez ou utilisez les flèches pour changer l&apos;ordre des sections.
-                    Les blocs <span className="font-medium text-[#9E9585]">fixe</span> font partie de la structure du template et ne peuvent pas être déplacés.
-                  </p>
-                  <SortableBlockEditor
-                    blocks={blockOrder}
-                    lockedBlocks={lockedBlocks}
-                    onOrderChange={(newBlocks) => {
-                      setBlockOrder(newBlocks);
-                      if (notice) setNotice('');
-                    }}
-                    blockIcons={blockIcons}
-                    onOpenIconPicker={(blockId) => setActiveIconPicker(blockId)}
-                  />
-                </div>
-              )}
 
               <div className="mt-8 rounded-[28px] border border-[#EAE2D6] bg-[#FCFBF8] p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
