@@ -559,7 +559,7 @@ export default function PublishedMemorialRenderer({
 
         <DragOverlay>
           {activeId && blockNodeMap[activeId] ? (
-            <div className="rounded-2xl opacity-90 shadow-2xl ring-2" style={{ ringColor: currentTemplate.colors.accent }}>
+            <div className="rounded-2xl opacity-90 shadow-2xl ring-2" style={{ '--tw-ring-color': currentTemplate.colors.accent } as React.CSSProperties}>
               {blockNodeMap[activeId]}
             </div>
           ) : null}
