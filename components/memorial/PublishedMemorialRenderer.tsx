@@ -1,8 +1,29 @@
 'use client';
 
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { Home, Share2, Sparkles } from 'lucide-react';
+import { GripVertical, Home, Share2, Sparkles } from 'lucide-react';
+import { resolveBlockIcon } from '@/lib/blockIconRegistry';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   ContributeBlock,
   FamilyBlock,
@@ -52,6 +73,65 @@ interface PublishedMemorialRendererProps {
   shareDisabled?: boolean;
   embedded?: boolean;
   showCompositionBadges?: boolean;
+  editMode?: boolean;
+  blockOrder?: string[];
+  onBlockOrderChange?: (newOrder: string[]) => void;
+  blockIcons?: Record<string, string>;
+}
+
+function SortableBlockItem({
+  id,
+  locked,
+  children,
+  accentColor,
+  iconName,
+}: {
+  id: string;
+  locked: boolean;
+  children: ReactNode;
+  accentColor: string;
+  iconName?: string;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: locked,
+  });
+
+  const BlockIcon = resolveBlockIcon(iconName);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+      }}
+      className="group relative"
+    >
+      {!locked && (
+        <button
+          type="button"
+          className="absolute left-2 top-3 z-10 flex h-7 w-7 cursor-grab items-center justify-center rounded-lg opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
+          style={{ color: accentColor, backgroundColor: `${accentColor}18` }}
+          title="Glisser pour déplacer"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
+      {BlockIcon && (
+        <div
+          className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-md opacity-60"
+          style={{ color: accentColor }}
+        >
+          <BlockIcon className="h-3.5 w-3.5" />
+        </div>
+      )}
+      {children}
+    </div>
+  );
 }
 
 function InfoPill({
@@ -98,7 +178,31 @@ export default function PublishedMemorialRenderer({
   shareDisabled = false,
   embedded = false,
   showCompositionBadges = false,
+  editMode = false,
+  blockOrder,
+  onBlockOrderChange,
+  blockIcons = {},
 }: PublishedMemorialRendererProps) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = event;
+    if (!over || active.id === over.id || !blockOrder || !onBlockOrderChange) return;
+    const oldIndex = blockOrder.indexOf(String(active.id));
+    const newIndex = blockOrder.indexOf(String(over.id));
+    if (oldIndex !== -1 && newIndex !== -1) {
+      onBlockOrderChange(arrayMove(blockOrder, oldIndex, newIndex));
+    }
+  };
   const theme = getVisualTheme(visualTheme);
   const model = getCompositionModel(compositionModel);
   const editorialTone = getWritingStyle(writingStyle);
@@ -395,6 +499,75 @@ export default function PublishedMemorialRenderer({
         ? heroTransmission
         : heroPortrait;
 
+  const LOCKED_BLOCKS = ['profile', 'text'];
+
+  const blockNodeMap: Record<string, ReactNode> = {
+    profile: hero,
+    text: textBlock,
+    gallery: galleryBlock,
+    gouts: musicBlock,
+    family: familyBlock,
+    links: linksBlock,
+    location: locationBlock,
+    messages: messagesBlock,
+    candle: tributeBlock,
+    contribute: contributeBlock,
+  };
+
+  const editBlocks = blockOrder ?? [];
+
+  const editLayout = (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className={sectionSpacing}>
+        <div
+          className="sticky top-0 z-20 flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium backdrop-blur-md"
+          style={{
+            borderColor: hexToRgba(currentTemplate.colors.accent, 0.25),
+            backgroundColor: hexToRgba(currentTemplate.colors.bg, 0.9),
+            color: currentTemplate.colors.accent,
+          }}
+        >
+          <span className="text-base">✦</span>
+          Mode édition — glissez les blocs pour réorganiser la page
+        </div>
+
+        <SortableContext items={editBlocks} strategy={verticalListSortingStrategy}>
+          <div className="space-y-6">
+            {editBlocks.map((blockId) => {
+              const node = blockNodeMap[blockId];
+              if (!node) return null;
+              const locked = LOCKED_BLOCKS.includes(blockId);
+              return (
+                <SortableBlockItem
+                  key={blockId}
+                  id={blockId}
+                  locked={locked}
+                  accentColor={currentTemplate.colors.accent}
+                  iconName={blockIcons[blockId]}
+                >
+                  {node}
+                </SortableBlockItem>
+              );
+            })}
+          </div>
+        </SortableContext>
+
+        <DragOverlay>
+          {activeId && blockNodeMap[activeId] ? (
+            <div className="rounded-2xl opacity-90 shadow-2xl ring-2" style={{ ringColor: currentTemplate.colors.accent }}>
+              {blockNodeMap[activeId]}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </div>
+    </DndContext>
+  );
+
   const portraitLayout = (
     <div className={sectionSpacing}>
       {hero}
@@ -512,11 +685,13 @@ export default function PublishedMemorialRenderer({
           </div>
         ) : null}
 
-        {model.id === 'memory-album'
-          ? albumLayout
-          : model.id === 'heritage-transmission'
-            ? transmissionLayout
-            : portraitLayout}
+        {editMode
+          ? editLayout
+          : model.id === 'memory-album'
+            ? albumLayout
+            : model.id === 'heritage-transmission'
+              ? transmissionLayout
+              : portraitLayout}
       </div>
     </div>
   );

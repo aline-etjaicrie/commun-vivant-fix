@@ -1,16 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import {
-    Search, X, Heart, Sparkles, Flower, Star, Sun, Moon, Cloud, Waves,
-    Leaf, Music, Mic, Headphones, Book, BookOpen, PenTool, PenLine, Palette,
-    Camera, Video, Image as ImageIcon, Flame, Bird, Home, MapPin, Compass,
-    Globe, Clock, History, Gift, Trophy, Coffee, Utensils, GlassWater,
-    Wine, Church, Infinity, Smile, Users, Baby, Crown, Diamond, Gem,
-    Key, Lock, Lightbulb, Rocket, Plane, Bike, Car, Milestone, Award,
-    TreeDeciduous, TreePine, Mountain, Anchor, Ship, Sailboat, Flower2,
-    Cat, Dog, LucideProps
-} from 'lucide-react';
+import { Search, X } from 'lucide-react';
+import { BLOCK_ICON_COMPONENTS } from '@/lib/blockIconRegistry';
 
 interface LucideIconPickerProps {
     onSelect: (iconName: string) => void;
@@ -18,19 +10,7 @@ interface LucideIconPickerProps {
     currentIcon?: string;
 }
 
-const ICON_COMPONENTS: Record<string, React.ElementType> = {
-    Heart, Sparkles, Flower, Flower2, Star, Sun, Moon, Cloud, Waves,
-    Leaf, TreeDeciduous, TreePine, Mountain, Anchor, Ship, Sailboat,
-    Music, Mic, Headphones, Book, BookOpen, PenTool, PenLine, Palette,
-    Camera, Video, Image: ImageIcon, Flame, Bird, Cat, Dog,
-    Home, MapPin, Compass, Globe, Clock, History, Gift, Trophy,
-    Coffee, Utensils, GlassWater, Wine, Church, Infinity,
-    Smile, Users, Baby, Crown, Diamond, Gem, Key, Lock, Lightbulb,
-    Rocket, Plane, Bike, Car, Milestone, Award
-};
-
-// Liste de sélection d'icônes populaires et adaptées
-const POPULAR_ICONS = Object.keys(ICON_COMPONENTS);
+const POPULAR_ICONS = Object.keys(BLOCK_ICON_COMPONENTS);
 
 export default function LucideIconPicker({ onSelect, onClose, currentIcon }: LucideIconPickerProps) {
     const [search, setSearch] = useState('');
@@ -40,7 +20,7 @@ export default function LucideIconPicker({ onSelect, onClose, currentIcon }: Luc
     );
 
     const renderIcon = (name: string) => {
-        const IconComponent = ICON_COMPONENTS[name];
+        const IconComponent = BLOCK_ICON_COMPONENTS[name];
         if (!IconComponent) return null;
         return <IconComponent className="w-6 h-6" />;
     };

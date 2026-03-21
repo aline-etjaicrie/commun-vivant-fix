@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -22,6 +23,15 @@ import {
   Type,
 } from 'lucide-react';
 import SortableBlockEditor from '@/components/SortableBlockEditor';
+
+const LucideIconPicker = dynamic(() => import('@/components/LucideIconPicker'), {
+  loading: () => (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent" />
+    </div>
+  ),
+  ssr: false,
+});
 import { type BlockType } from '@/lib/layouts';
 import { FINAL_TEMPLATES, getFinalTemplate } from '@/lib/finalTemplates';
 import { resolveCommunTypeFromPayload } from '@/lib/almaProfiles';
@@ -167,6 +177,17 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
   const [colorPalette, setColorPalette] = useState<string>('navy-gold');
   const [customColors, setCustomColors] = useState({ primary: '#0F2A44', secondary: '#C9A24D', bg: '#F5F4F2' });
   const [photoFilter, setPhotoFilter] = useState<string>('none');
+  const [blockIcons, setBlockIcons] = useState<Record<string, string>>({
+    candle: 'Flame',
+    gouts: 'Music',
+    gallery: 'Camera',
+    family: 'Users',
+    location: 'MapPin',
+    links: 'Globe',
+    messages: 'Heart',
+    contribute: 'Gift',
+  });
+  const [activeIconPicker, setActiveIconPicker] = useState<string | null>(null);
 
   const editorFontFamily = useMemo(() => {
     if (textTypography === 'sans') return 'var(--font-sans), system-ui, sans-serif';
@@ -1093,6 +1114,8 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                       setBlockOrder(newBlocks);
                       if (notice) setNotice('');
                     }}
+                    blockIcons={blockIcons}
+                    onOpenIconPicker={(blockId) => setActiveIconPicker(blockId)}
                   />
                 </div>
               )}
@@ -1271,13 +1294,27 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                   audioUrl={audioUrl}
                   audioTitle={audioTitle}
                   embedded
+                  editMode
+                  blockOrder={blockOrder}
+                  onBlockOrderChange={(newOrder) => setBlockOrder(newOrder as BlockType[])}
+                  blockIcons={blockIcons}
                 />
               </div>
             </div>
           </aside>
         </div>
       </main>
+
+      {activeIconPicker && (
+        <LucideIconPicker
+          currentIcon={blockIcons[activeIconPicker]}
+          onSelect={(iconName) => {
+            setBlockIcons((prev) => ({ ...prev, [activeIconPicker]: iconName }));
+            setActiveIconPicker(null);
+          }}
+          onClose={() => setActiveIconPicker(null)}
+        />
+      )}
     </div>
   );
 }
-                                                                                                                                                                              

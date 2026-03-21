@@ -20,13 +20,16 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, GripVertical, Lock } from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical, Lock, Smile } from 'lucide-react';
 import { AVAILABLE_BLOCKS, type BlockType } from '@/lib/layouts';
+import { resolveBlockIcon } from '@/lib/blockIconRegistry';
 
 interface SortableBlockEditorProps {
   blocks: BlockType[];
   lockedBlocks?: BlockType[];
   onOrderChange: (newBlocks: BlockType[]) => void;
+  blockIcons?: Record<string, string>;
+  onOpenIconPicker?: (blockId: string) => void;
 }
 
 function getBlockLabel(blockId: BlockType): string {
@@ -41,6 +44,8 @@ interface SortableItemProps {
   onMoveUp: () => void;
   onMoveDown: () => void;
   isDragging?: boolean;
+  iconName?: string;
+  onIconClick?: () => void;
 }
 
 function SortableItem({
@@ -51,7 +56,10 @@ function SortableItem({
   onMoveUp,
   onMoveDown,
   isDragging = false,
+  iconName,
+  onIconClick,
 }: SortableItemProps) {
+  const ResolvedIcon = resolveBlockIcon(iconName);
   const { attributes, listeners, setNodeRef, transform, transition, active } = useSortable({
     id,
     disabled: isLocked,
@@ -98,7 +106,22 @@ function SortableItem({
       </span>
 
       {!isLocked && (
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          {onIconClick && (
+            <button
+              type="button"
+              onClick={onIconClick}
+              aria-label="Choisir une icône"
+              title={iconName ?? 'Choisir une icône'}
+              className="rounded p-1.5 text-[#A27C53] hover:bg-[#FFF8EE] transition-colors"
+            >
+              {ResolvedIcon ? (
+                <ResolvedIcon className="h-3.5 w-3.5" />
+              ) : (
+                <Smile className="h-3.5 w-3.5 opacity-40" />
+              )}
+            </button>
+          )}
           <button
             type="button"
             onClick={onMoveUp}
@@ -127,6 +150,8 @@ export default function SortableBlockEditor({
   blocks,
   lockedBlocks = [],
   onOrderChange,
+  blockIcons = {},
+  onOpenIconPicker,
 }: SortableBlockEditorProps) {
   const [activeId, setActiveId] = useState<BlockType | null>(null);
 
@@ -200,6 +225,8 @@ export default function SortableBlockEditor({
                 total={sortableTotal}
                 onMoveUp={() => moveBlock(index, -1)}
                 onMoveDown={() => moveBlock(index, 1)}
+                iconName={blockIcons[block]}
+                onIconClick={!isLocked && onOpenIconPicker ? () => onOpenIconPicker(block) : undefined}
               />
             );
           })}

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(python3 -c \":*)",
+      "Bash(/usr/bin/git status:*)",
+      "Bash(/usr/bin/git log:*)",
+      "Bash(pkill -f \"git -C\")",
+      "Bash(rm -f /Users/alineweber/Desktop/commun-vivant-fix/.git/index.lock)",
+      "Bash(pkill -9 -f \"git\")",
+      "Bash(rm -f /Users/alineweber/Desktop/commun-vivant-fix/.git/index.lock /Users/alineweber/Desktop/commun-vivant-fix/.git/COMMIT_EDITMSG.lock)"
+    ],
+    "additionalDirectories": [
+      "/Users/alineweber/Desktop/commun-vivant-fix/.git"
+    ]
+  }
+}

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Step as StepType, Question as QuestionType } from '@/lib/schema';
 import Question from './Question';
 import StylePicker from './StylePicker';
-import AlertModal from './AlertModal';
+import { X } from 'lucide-react';
 
 interface StepProps {
   step: StepType;
@@ -198,11 +198,34 @@ export default function Step({ step, data, onChange }: StepProps) {
 
   return (
     <div className="w-full max-w-3xl mx-auto">
-      <AlertModal
-        isOpen={showInconnuAlert}
-        onClose={() => setShowInconnuAlert(false)}
-        type="inconnu"
-      />
+      {showInconnuAlert && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
+            <button
+              type="button"
+              onClick={() => setShowInconnuAlert(false)}
+              aria-label="Fermer"
+              className="absolute top-4 right-4 text-memoir-dark/40 hover:text-memoir-dark transition-colors"
+            >
+              <X className="w-6 h-6" aria-hidden="true" />
+            </button>
+            <h3 className="text-2xl font-serif font-bold text-memoir-dark mb-4">⚠️ Attention</h3>
+            <div className="text-memoir-dark/80 mb-6 leading-relaxed">
+              <p className="mb-4">
+                Si vous n&apos;avez pas connu personnellement cette personne, certaines informations
+                (photos, textes, gravure sur une tombe ou un objet mémoriel) peuvent nécessiter
+                l&apos;accord des ayants droit.
+              </p>
+              <p>
+                Vous pouvez continuer, mais la publication finale pourra être limitée sans validation.
+              </p>
+            </div>
+            <button type="button" onClick={() => setShowInconnuAlert(false)} className="btn-primary w-full">
+              J&apos;ai compris
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mb-8">
         <h2 className="text-3xl font-serif font-bold text-memoir-dark mb-3">
