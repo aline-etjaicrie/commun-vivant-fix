@@ -78,19 +78,54 @@ import { buildMemoryFallbackText } from '@/lib/memoryFallbackText';
 import { blobToURL, getPhoto } from '@/lib/indexedDB';
 import PublishedMemorialRenderer from '@/components/memorial/PublishedMemorialRenderer';
 
-const COLOR_PALETTES: Array<{
+type ColorPalette = {
   id: string;
   name: string;
+  family: string;
   primary: string;
   secondary: string;
+  accent: string;
   bg: string;
-}> = [
-  { id: 'navy-gold', name: 'Original', primary: '#0F2A44', secondary: '#C9A24D', bg: '#F5F4F2' },
-  { id: 'forest', name: 'Nature', primary: '#2C5F2D', secondary: '#97BC62', bg: '#FAF9F7' },
-  { id: 'slate', name: 'Pierre', primary: '#334155', secondary: '#94a3b8', bg: '#f8fafc' },
-  { id: 'rose', name: 'Douceur', primary: '#8B3A52', secondary: '#D4A0B0', bg: '#FDF7F8' },
-  { id: 'gold', name: 'Lumière', primary: '#7A5A2E', secondary: '#D4AF37', bg: '#FFFBF0' },
+  text: string;
+};
+
+const COLOR_PALETTES: ColorPalette[] = [
+  // FAMILLE 1 — INTENSES
+  { id: 'vert-bouteille', name: 'Vert bouteille', family: 'Intenses', primary: '#1B4332', secondary: '#2D6A4F', accent: '#40916C', bg: '#F8F9F4', text: '#0D1F17' },
+  { id: 'bleu-roi', name: 'Bleu roi', family: 'Intenses', primary: '#1A237E', secondary: '#1565C0', accent: '#1976D2', bg: '#F8F9FF', text: '#0D1333' },
+  { id: 'rouge-sang', name: 'Rouge intense', family: 'Intenses', primary: '#7F0000', secondary: '#C62828', accent: '#E53935', bg: '#FFF8F8', text: '#2D0000' },
+  { id: 'prune-or', name: 'Prune et or', family: 'Intenses', primary: '#4A148C', secondary: '#7B1FA2', accent: '#D4AF37', bg: '#FBF8FF', text: '#1A0033' },
+  // FAMILLE 2 — CHALEUREUX
+  { id: 'terracotta', name: 'Terracotta', family: 'Chaleureux', primary: '#6D2B14', secondary: '#BF5A34', accent: '#E8855C', bg: '#FDF5F0', text: '#3A1508' },
+  { id: 'moutarde-sombre', name: 'Moutarde sombre', family: 'Chaleureux', primary: '#4A3800', secondary: '#B8860B', accent: '#DAA520', bg: '#FDFAF0', text: '#2A2000' },
+  { id: 'encre-cuivre', name: 'Encre et cuivre', family: 'Chaleureux', primary: '#1C1C2E', secondary: '#B87333', accent: '#CD7F32', bg: '#F9F7F4', text: '#0A0A1A' },
+  // FAMILLE 3 — SOBRES VIVANTS
+  { id: 'sauge-lin', name: 'Sauge et lin', family: 'Sobres vivants', primary: '#2D4A3E', secondary: '#4A7C59', accent: '#8B7355', bg: '#F4F6F0', text: '#1A2E25' },
+  { id: 'petrole-sable', name: 'Pétrole et sable', family: 'Sobres vivants', primary: '#0D3349', secondary: '#1B5E7A', accent: '#C4A882', bg: '#F5F8FA', text: '#061A26' },
+  { id: 'ardoise-rose', name: 'Ardoise et rose', family: 'Sobres vivants', primary: '#2C3E50', secondary: '#34495E', accent: '#C0727F', bg: '#F9F7F8', text: '#1A252F' },
+  { id: 'nuit-etoilee', name: 'Nuit étoilée', family: 'Sobres vivants', primary: '#0A0E27', secondary: '#1A237E', accent: '#FFD700', bg: '#F8F8FF', text: '#FAFAFA' },
+  { id: 'original', name: 'Original', family: 'Sobres vivants', primary: '#0F2A44', secondary: '#2B5F7D', accent: '#C9A24D', bg: '#F5F4F2', text: '#0F2A44' },
 ];
+
+function isLightText(palette: { bg: string }): boolean {
+  const hex = palette.bg.replace('#', '');
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5;
+}
+
+function resolveTextColor(palette: { bg: string; text: string }): string {
+  const darkBg = isLightText(palette);
+  const hex = palette.text.replace('#', '');
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const textLum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (!darkBg && textLum > 0.7) return '#1A1A2E';
+  if (darkBg && textLum < 0.3) return '#F0F0F0';
+  return palette.text;
+}
 
 const PHOTO_FILTER_OPTIONS: Array<{
   id: string;
@@ -305,7 +340,7 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
         const found = savedPaletteId ? COLOR_PALETTES.find(p => p.id === savedPaletteId) : null;
         if (savedPaletteId) setColorPalette(savedPaletteId);
         if (found) {
-          setCustomColors({ bg: found.bg, text: baseColors.text, accent: found.secondary, textSecondary: baseColors.textSecondary });
+          setCustomColors({ bg: found.bg, text: resolveTextColor(found), accent: found.accent, textSecondary: found.secondary });
         } else if (previewData?.colors) {
           const c = previewData.colors;
           setCustomColors({
@@ -988,34 +1023,43 @@ export default function ValidateEditorPage({ memoryId }: ValidateEditorPageProps
                   <Palette className="h-4 w-4 text-[#A27C53]" />
                   Palette de couleurs
                 </div>
-                <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
-                  {COLOR_PALETTES.map((palette) => {
-                    const isSelected = colorPalette === palette.id;
-                    return (
-                      <button
-                        key={palette.id}
-                        type="button"
-                        onClick={() => {
-                          setColorPalette(palette.id);
-                          const base = buildThemeTemplate(visualTheme, communType);
-                          setCustomColors({ bg: palette.bg, text: base.colors.text, accent: palette.secondary, textSecondary: base.colors.textSecondary });
-                          if (notice) setNotice('');
-                        }}
-                        className={`rounded-[18px] border p-3 text-center transition ${
-                          isSelected
-                            ? 'border-[#A27C53] bg-[#FFF8EE] shadow-sm'
-                            : 'border-[#EAE2D6] bg-[#FFFEFC] hover:border-[#D9C2A1]'
-                        }`}
-                      >
-                        <div
-                          className="mx-auto mb-2 h-8 w-8 rounded-full border border-black/10"
-                          style={{ background: `linear-gradient(135deg, ${palette.primary} 50%, ${palette.secondary} 50%)` }}
-                        />
-                        <p className="text-xs font-medium text-[#0F2A44]">{palette.name}</p>
-                      </button>
-                    );
-                  })}
-                </div>
+                {(['Intenses', 'Chaleureux', 'Sobres vivants'] as const).map((family) => (
+                  <div key={family} className="mb-4">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9E9585]">{family}</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {COLOR_PALETTES.filter((p) => p.family === family).map((palette) => {
+                        const isSelected = colorPalette === palette.id;
+                        return (
+                          <button
+                            key={palette.id}
+                            type="button"
+                            onClick={() => {
+                              setColorPalette(palette.id);
+                              setCustomColors({
+                                bg: palette.bg,
+                                text: resolveTextColor(palette),
+                                accent: palette.accent,
+                                textSecondary: palette.secondary,
+                              });
+                              if (notice) setNotice('');
+                            }}
+                            className={`rounded-[18px] border p-2.5 text-center transition ${
+                              isSelected
+                                ? 'border-[#A27C53] bg-[#FFF8EE] shadow-sm'
+                                : 'border-[#EAE2D6] bg-[#FFFEFC] hover:border-[#D9C2A1]'
+                            }`}
+                          >
+                            <div
+                              className="mx-auto mb-1.5 h-7 w-7 rounded-full border border-black/10"
+                              style={{ background: `linear-gradient(135deg, ${palette.primary} 50%, ${palette.accent} 50%)` }}
+                            />
+                            <p className="text-[10px] font-medium leading-tight text-[#0F2A44]">{palette.name}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
                 <div className="mt-4 grid grid-cols-3 gap-3">
                   {(['text', 'accent', 'bg'] as const).map((key) => {
                     const labels = { text: 'Texte principal', accent: 'Couleur accent', bg: 'Fond' };
