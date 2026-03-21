@@ -24,6 +24,11 @@ import { ChevronDown, ChevronUp, GripVertical, Lock, Smile } from 'lucide-react'
 import { AVAILABLE_BLOCKS, type BlockType } from '@/lib/layouts';
 import { resolveBlockIcon } from '@/lib/blockIconRegistry';
 
+function BlockIconDisplay({ iconName }: { iconName?: string }) {
+  const Icon = resolveBlockIcon(iconName);
+  return Icon ? <Icon className="h-3.5 w-3.5" /> : <Smile className="h-3.5 w-3.5 opacity-40" />;
+}
+
 interface SortableBlockEditorProps {
   blocks: BlockType[];
   lockedBlocks?: BlockType[];
@@ -59,7 +64,6 @@ function SortableItem({
   iconName,
   onIconClick,
 }: SortableItemProps) {
-  const ResolvedIcon = resolveBlockIcon(iconName);
   const { attributes, listeners, setNodeRef, transform, transition, active } = useSortable({
     id,
     disabled: isLocked,
@@ -115,11 +119,7 @@ function SortableItem({
               title={iconName ?? 'Choisir une icône'}
               className="rounded p-1.5 text-[#A27C53] hover:bg-[#FFF8EE] transition-colors"
             >
-              {ResolvedIcon ? (
-                <ResolvedIcon className="h-3.5 w-3.5" />
-              ) : (
-                <Smile className="h-3.5 w-3.5 opacity-40" />
-              )}
+              <BlockIconDisplay iconName={iconName} />
             </button>
           )}
           <button

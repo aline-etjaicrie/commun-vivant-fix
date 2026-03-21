@@ -112,6 +112,7 @@ function InlineQRCode({ qrUrl, label }: { qrUrl: string; label?: string }) {
 
   return (
     <div className="flex flex-col items-center gap-1">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={label ? `QR ${label}` : 'QR code invitation'} className="h-28 w-28 rounded-xl border border-[#E7D9C8]" />
       {label && <p className="text-center text-xs text-[#0F2A44]/40 max-w-[7rem] truncate">{label}</p>}
     </div>

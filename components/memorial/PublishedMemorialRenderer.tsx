@@ -79,6 +79,19 @@ interface PublishedMemorialRendererProps {
   blockIcons?: Record<string, string>;
 }
 
+function BlockIconBadge({ iconName, accentColor }: { iconName?: string; accentColor: string }) {
+  const Icon = resolveBlockIcon(iconName);
+  if (!Icon) return null;
+  return (
+    <div
+      className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-md opacity-60"
+      style={{ color: accentColor }}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </div>
+  );
+}
+
 function SortableBlockItem({
   id,
   locked,
@@ -96,8 +109,6 @@ function SortableBlockItem({
     id,
     disabled: locked,
   });
-
-  const BlockIcon = resolveBlockIcon(iconName);
 
   return (
     <div
@@ -121,14 +132,7 @@ function SortableBlockItem({
           <GripVertical className="h-4 w-4" />
         </button>
       )}
-      {BlockIcon && (
-        <div
-          className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-md opacity-60"
-          style={{ color: accentColor }}
-        >
-          <BlockIcon className="h-3.5 w-3.5" />
-        </div>
-      )}
+      <BlockIconBadge iconName={iconName} accentColor={accentColor} />
       {children}
     </div>
   );
