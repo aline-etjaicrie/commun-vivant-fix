@@ -42,6 +42,7 @@ function QuestionnaireContent() {
 
   const [stepIndex, setStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [saveStatus, setSaveStatus] = useState('Réponses enregistrées automatiquement.');
   const saveStatusTimeoutRef = useRef<number | null>(null);
   const [data, setData] = useState<Partial<QuestionnaireData>>({
@@ -197,8 +198,36 @@ function QuestionnaireContent() {
     }
   };
 
+  // Calcule un score de richesse du contenu (0–100)
+  const computeCompleteness = (): number => {
+    let score = 0;
+    if (data.identite?.prenom) score += 25;
+    const adjectifs = data.caractere?.adjectifs || [];
+    score += Math.min(adjectifs.length * 10, 20);
+    const valeurs = data.valeurs?.selected || [];
+    score += Math.min(valeurs.length * 8, 20);
+    if (data.talents?.passions || data.talents?.talent) score += 15;
+    if (data.liens?.personnes) score += 10;
+    if (data.resume) score += 10;
+    return Math.min(score, 100);
+  };
+
+  // Vérifie qu'il y a assez de matière pour générer un texte fidèle
+  const hasMinimalContent = (): boolean => {
+    if (!data.identite?.prenom) return false;
+    const hasCaractere = (data.caractere?.adjectifs || []).length > 0;
+    const hasValeurs = (data.valeurs?.selected || []).length > 0;
+    const hasContext = !!(data.resume || data.liens?.personnes || data.talents?.passions);
+    return hasCaractere || hasValeurs || hasContext;
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting) return;
+    if (!hasMinimalContent()) {
+      setSubmitError("Ajoutez au moins un prénom et quelques éléments (traits de caractère ou valeurs) pour générer une base fidèle.");
+      return;
+    }
+    setSubmitError('');
     setIsSubmitting(true);
     // Sauvegarder les données du questionnaire
     localStorage.setItem(questionnaireFinalStorageKey, JSON.stringify(data));
@@ -311,10 +340,50 @@ function QuestionnaireContent() {
           {/* Barre de progression */}
           <Progress current={currentStepNumber} total={steps.length} />
 
+          {/* Indicateur de richesse du contenu — visible dès la 2e étape */}
+          {stepIndex > 0 && (() => {
+            const pct = computeCompleteness();
+            const barColor = pct < 30 ? 'bg-red-400' : pct < 60 ? 'bg-amber-400' : 'bg-emerald-500';
+            const barWidth = pct < 20 ? 'w-1/5' : pct < 40 ? 'w-2/5' : pct < 60 ? 'w-3/5' : pct < 80 ? 'w-4/5' : 'w-full';
+            const label = pct < 30
+              ? "Contenu encore léger — quelques éléments de plus amélioreront l'aperçu"
+              : pct < 60
+              ? 'Base présente — continuez pour un meilleur rendu'
+              : pct < 80
+              ? 'Bonne matière — aperçu personnalisé attendu'
+              : 'Matière riche — excellent rendu attendu';
+            return (
+              <div className="mt-3 mb-2 px-1">
+                <div className="flex justify-between items-center text-xs text-memoir-blue/50 mb-1.5">
+                  <span className="font-semibold uppercase tracking-widest text-[10px]">Richesse du contenu</span>
+                  <span className="italic">{label}</span>
+                </div>
+                <div className="h-1 bg-memoir-blue/10 rounded-full overflow-hidden">
+                  <div className={`h-1 rounded-full transition-all duration-700 ${barColor} ${barWidth}`} />
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Étape courante */}
           <div className="bg-white rounded-2xl shadow-lg p-6 md:p-12 mb-6 md:mb-8">
             <StepComponent step={currentStep} data={data} onChange={handleChange} />
           </div>
+
+          {/* Avertissement contenu insuffisant (dernière étape) */}
+          {submitError && isLastStep && (
+            <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+              <span className="shrink-0">⚠️</span>
+              <span>{submitError}</span>
+            </div>
+          )}
+
+          {/* Cadrage avant génération (dernière étape, contenu OK) */}
+          {isLastStep && !submitError && hasMinimalContent() && (
+            <div className="mb-4 rounded-xl bg-memoir-blue/5 border border-memoir-blue/10 px-4 py-3 text-sm text-memoir-blue/70 italic text-center">
+              L'IA va générer une première base à relire et enrichir — pas un texte final.
+            </div>
+          )}
 
           {/* Navigation */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-4">

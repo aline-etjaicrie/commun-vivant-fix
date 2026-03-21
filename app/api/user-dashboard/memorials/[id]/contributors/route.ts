@@ -52,8 +52,9 @@ export async function GET(
         .order('created_at', { ascending: false }),
       admin
         .from('memory_contributions')
-        .select('id, author_email, created_at')
-        .eq('memory_id', memoryId),
+        .select('id, author_name, author_email, relationship_label, content, status, source, created_at, invite_id')
+        .eq('memory_id', memoryId)
+        .order('created_at', { ascending: false }),
       admin
         .from('memory_activity_logs')
         .select('id, actor_email, actor_role, source, action, target_type, target_id, metadata, created_at')
@@ -103,6 +104,17 @@ export async function GET(
       creatorEmail = ownerResponse.data.user?.email || creatorEmail;
     }
 
+    const contributions = (contributionsRes.data || []).map((c: any) => ({
+      id: c.id,
+      authorName: c.author_name || null,
+      authorEmail: c.author_email || null,
+      relationship: c.relationship_label || null,
+      content: c.content,
+      status: c.status,
+      source: c.source,
+      createdAt: c.created_at,
+    }));
+
     return NextResponse.json({
       memory: {
         id: memory.id,
@@ -114,11 +126,13 @@ export async function GET(
       },
       memberships,
       invites,
+      contributions,
       recentActivity: activityRes.data || [],
       summary: {
         activeCount: memberships.filter((item) => item.status === 'active').length,
         pendingCount: invites.filter((item) => item.status === 'pending').length,
-        contributionCount: (contributionsRes.data || []).length,
+        contributionCount: contributions.length,
+        pendingModerationCount: contributions.filter((c) => c.status === 'submitted').length,
       },
     });
   } catch (error) {

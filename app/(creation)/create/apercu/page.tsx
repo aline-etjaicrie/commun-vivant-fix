@@ -191,10 +191,10 @@ function ApercuContent() {
         <div className="mb-10 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#C9A24D]/10 px-4 py-2">
             <Sparkles className="h-4 w-4 text-[#C9A24D]" />
-            <span className="text-sm font-medium text-[#0F2A44]">✨ Aperçu généré par l'IA</span>
+            <span className="text-sm font-medium text-[#0F2A44]">Première base générée par l'IA</span>
           </div>
           <h1 className="mb-3 font-serif text-3xl text-[#0F2A44] md:text-4xl">
-            Voilà ce que ça pourrait donner…
+            Voici une première base à relire et enrichir
           </h1>
           {subjectName && (
             <p className="text-lg text-[#5E6B78]">Pour {subjectName}</p>
@@ -212,7 +212,7 @@ function ApercuContent() {
             </p>
             <div className="mt-8 border-t border-[#C9A24D]/10 pt-6">
               <p className="text-center text-sm italic text-[#9E9585]">
-                Ceci n'est qu'un début… Le texte complet sera bien plus riche.
+                Ce texte est une base de travail — à relire, corriger et enrichir dans l'atelier.
               </p>
             </div>
           </div>

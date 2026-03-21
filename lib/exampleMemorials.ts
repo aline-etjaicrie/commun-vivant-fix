@@ -270,4 +270,5 @@ export const EXAMPLE_MEMORIALS: ExampleMemorial[] = [
 ];
 
 export function getExampleMemorialBySlug(slug: string): ExampleMemorial | undefined {
-  return EXAMP
+  return EXAMPLE_MEMORIALS.find((example) => example.slug === slug);
+}

@@ -4,15 +4,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
+  Archive,
+  CheckCircle2,
   ChevronLeft,
   Clock3,
   Copy,
   Loader2,
   Mail,
+  MessageSquare,
   Send,
   ShieldCheck,
   UserPlus,
   Download,
+  XCircle,
 } from 'lucide-react';
 import FlowNotice from '@/components/create/FlowNotice';
 import { createClient } from '@/lib/supabase/client';
@@ -50,6 +54,17 @@ type InviteEmailDelivery = {
   reason?: string | null;
 };
 
+type Contribution = {
+  id: string;
+  authorName: string | null;
+  authorEmail: string | null;
+  relationship: string | null;
+  content: string;
+  status: 'submitted' | 'reviewed' | 'archived' | 'refused';
+  source: string;
+  createdAt: string;
+};
+
 type ActivityLog = {
   id: string;
   actor_email: string | null;
@@ -73,11 +88,13 @@ type ContributorsResponse = {
   };
   memberships: ContributorMembership[];
   invites: ContributorInvite[];
+  contributions: Contribution[];
   recentActivity: ActivityLog[];
   summary: {
     activeCount: number;
     pendingCount: number;
     contributionCount: number;
+    pendingModerationCount: number;
   };
 };
 
@@ -138,6 +155,7 @@ export default function ContributorsPage() {
     title: string;
     message: string;
   } | null>(null);
+  const [moderatingId, setModeratingId] = useState<string | null>(null);
 
   const activeMembers = useMemo(
     () => (data?.memberships || []).filter((membership) => membership.role !== 'owner'),
@@ -318,6 +336,42 @@ export default function ContributorsPage() {
     }
   };
 
+  const moderateContribution = async (contribId: string, status: 'reviewed' | 'archived' | 'refused') => {
+    try {
+      setModeratingId(contribId);
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        router.push(`/login?returnUrl=${encodeURIComponent(`/dashboard/${id}/contributors`)}`);
+        return;
+      }
+
+      const response = await fetch(
+        `/api/user-dashboard/memorials/${encodeURIComponent(id)}/contributions/${encodeURIComponent(contribId)}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ status }),
+        }
+      );
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error || 'Impossible de modifier ce souvenir.');
+      }
+
+      await fetchData();
+    } catch (error: any) {
+      console.error('Moderation error:', error);
+      setNotice({
+        variant: 'error',
+        title: 'Action impossible pour le moment',
+        message: error?.message || 'Reessayez dans un instant.',
+      });
+    } finally {
+      setModeratingId(null);
+    }
+  };
+
   const renderRole = (role: string) => {
     if (role === 'editor') return 'Co-editeur';
     if (role === 'viewer') return 'Lecture seule';
@@ -493,6 +547,9 @@ export default function ContributorsPage() {
           <div className="rounded-3xl border border-[#C9A24D]/20 bg-white p-6 shadow-sm">
             <p className="text-sm text-[#0F2A44]/50">Souvenirs recueillis</p>
             <p className="mt-2 text-3xl font-semibold text-[#0F2A44]">{data?.summary.contributionCount || 0}</p>
+            {(data?.summary.pendingModerationCount || 0) > 0 && (
+              <p className="mt-1 text-xs text-amber-600">{data?.summary.pendingModerationCount} a relire</p>
+            )}
           </div>
         </div>
 
@@ -634,6 +691,143 @@ export default function ContributorsPage() {
             </div>
           </aside>
         </div>
+
+        {/* Modération des souvenirs */}
+        <section className="mt-10 rounded-3xl border border-[#E7D9C8] bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <MessageSquare className="h-5 w-5 text-[#C9A24D]" />
+              <div>
+                <h2 className="text-xl font-semibold text-[#0F2A44]">Souvenirs recueillis</h2>
+                <p className="mt-0.5 text-sm text-[#0F2A44]/60">
+                  Relisez et decidez ce que vous souhaitez integrer, mettre de cote ou refuser.
+                </p>
+              </div>
+            </div>
+            {(data?.summary.pendingModerationCount || 0) > 0 && (
+              <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">
+                {data?.summary.pendingModerationCount} a relire
+              </span>
+            )}
+          </div>
+
+          <div className="mt-6 space-y-4">
+            {(data?.contributions || []).length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-[#D7D1C8] p-6 text-sm text-[#0F2A44]/50">
+                Aucun souvenir recu pour le moment. Les contributions des proches invites apparaitront ici.
+              </div>
+            ) : (
+              (data?.contributions || []).map((contribution) => {
+                const isModerating = moderatingId === contribution.id;
+                const statusColors: Record<Contribution['status'], string> = {
+                  submitted: 'bg-amber-50 text-amber-700',
+                  reviewed: 'bg-emerald-50 text-emerald-700',
+                  archived: 'bg-stone-100 text-stone-600',
+                  refused: 'bg-red-50 text-red-600',
+                };
+                const statusLabels: Record<Contribution['status'], string> = {
+                  submitted: 'A relire',
+                  reviewed: 'Accepte',
+                  archived: 'Mis de cote',
+                  refused: 'Refuse',
+                };
+
+                return (
+                  <div
+                    key={contribution.id}
+                    className={`rounded-2xl border p-5 transition-opacity ${isModerating ? 'opacity-50' : 'opacity-100'} ${contribution.status === 'submitted' ? 'border-amber-200 bg-amber-50/30' : 'border-[#F0E4D6] bg-white'}`}
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <p className="font-medium text-[#0F2A44]">
+                            {contribution.authorName || 'Anonyme'}
+                          </p>
+                          {contribution.relationship && (
+                            <span className="text-sm text-[#0F2A44]/55">— {contribution.relationship}</span>
+                          )}
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[contribution.status]}`}>
+                            {statusLabels[contribution.status]}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#0F2A44]/40 mb-3">
+                          {new Date(contribution.createdAt).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                          {contribution.source === 'invite_guest' ? ' — via lien d invitation' : ''}
+                        </p>
+                        <p className="text-sm text-[#0F2A44]/80 leading-relaxed whitespace-pre-wrap">
+                          {contribution.content}
+                        </p>
+                      </div>
+
+                      {contribution.status === 'submitted' && (
+                        <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                          <button
+                            type="button"
+                            onClick={() => moderateContribution(contribution.id, 'reviewed')}
+                            disabled={isModerating}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Accepter
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moderateContribution(contribution.id, 'archived')}
+                            disabled={isModerating}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[#D7D1C8] px-4 py-2 text-xs font-medium text-[#0F2A44] transition-colors hover:border-[#C9A24D] disabled:opacity-50"
+                          >
+                            <Archive className="h-3.5 w-3.5" />
+                            Mettre de cote
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moderateContribution(contribution.id, 'refused')}
+                            disabled={isModerating}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-4 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            Refuser
+                          </button>
+                        </div>
+                      )}
+
+                      {contribution.status !== 'submitted' && (
+                        <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                          {contribution.status !== 'reviewed' && (
+                            <button
+                              type="button"
+                              onClick={() => moderateContribution(contribution.id, 'reviewed')}
+                              disabled={isModerating}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-[#D7D1C8] px-3 py-1.5 text-xs font-medium text-[#0F2A44] transition-colors hover:border-[#C9A24D] disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              Accepter
+                            </button>
+                          )}
+                          {contribution.status !== 'archived' && (
+                            <button
+                              type="button"
+                              onClick={() => moderateContribution(contribution.id, 'archived')}
+                              disabled={isModerating}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-[#D7D1C8] px-3 py-1.5 text-xs font-medium text-[#0F2A44] transition-colors hover:border-[#C9A24D] disabled:opacity-50"
+                            >
+                              <Archive className="h-3.5 w-3.5" />
+                              Mettre de cote
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
 
         <div className="mt-10 flex justify-between">
           <button
