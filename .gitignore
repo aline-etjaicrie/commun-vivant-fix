@@ -42,3 +42,10 @@ next-env.d.ts
 *.zip
 Archive.zip
 package-lock 2.json
+
+# Claude Code project settings
+.claude/
+
+# macOS duplicate files
+*\ 2.tsx
+*\ 2.ts
